@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXORA AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080811;color:white;font-family:Arial}
+header{padding:20px;color:#a855ff;font-size:25px;font-weight:bold;border-bottom:1px solid #29203e}
+main{max-width:800px;margin:auto;padding:25px}
+h1{text-align:center;margin-top:70px;font-size:35px}
+h1 span{color:#a855ff}
+p{text-align:center;color:#aaa}
+#chat{height:55vh;overflow:auto;padding:15px}
+.msg{padding:14px;margin:12px 0;border-radius:15px;line-height:1.7}
+.user{background:#282044}
+.bot{background:#151522}
+form{display:flex;gap:8px;background:#151522;padding:10px;border:1px solid #7030b8;border-radius:18px}
+input{flex:1;background:transparent;border:0;outline:0;color:white;padding:12px;font-size:16px}
+button{background:#8b35ff;color:white;border:0;border-radius:12px;padding:12px 20px}
+small{display:block;text-align:center;color:#777;margin-top:12px}
+</style>
+</head>
+<body>
+<header>👑 NEXORA AI</header>
+<main>
+<h1>أهلاً بك في <span>NEXORA AI</span></h1>
+<p>مساعدك الذكي في كل شيء ✨</p>
+<div id="chat"></div>
+<form id="form">
+<input id="input" placeholder="اكتب رسالتك هنا..." required>
+<button>➤</button>
+</form>
+<small>نسخة تجريبية من NEXORA AI</small>
+</main>
+<script>
+const form=document.getElementById("form");
+const input=document.getElementById("input");
+const chat=document.getElementById("chat");
+form.onsubmit=e=>{
+e.preventDefault();
+let text=input.value.trim();
+if(!text)return;
+chat.innerHTML+=`<div class="msg user">${text}</div>`;
+chat.innerHTML+=`<div class="msg bot">أهلاً بيك في NEXORA AI 💜<br>لسه بنجهز الذكاء الاصطناعي الحقيقي!</div>`;
+input.value="";
+chat.scrollTop=chat.scrollHeight;
+};
+</script>
+</body>
+</html>
