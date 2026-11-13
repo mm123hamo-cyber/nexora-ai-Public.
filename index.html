@@ -49,5 +49,39 @@ input.value="";
 chat.scrollTop=chat.scrollHeight;
 };
 </script>
-</body>
+</body><style>
+body.light-mode {
+  background: #f5f5f5 !important;
+  color: #171717 !important;
+}
+body.light-mode div,
+body.light-mode section,
+body.light-mode header {
+  background-color: #fff !important;
+  color: #171717 !important;
+}
+body.light-mode input,
+body.light-mode textarea {
+  background: #fff !important;
+  color: #171717 !important;
+  border-color: #ccc !important;
+}
+</style>
+
+<button id="themeToggle" style="position:fixed;top:15px;right:15px;z-index:9999;padding:10px 15px;border-radius:20px;border:1px solid #888;cursor:pointer">
+الوضع الأبيض
+</button>
+
+<script>
+const btn = document.getElementById("themeToggle");
+if (localStorage.getItem("nexora-theme") === "light") {
+  document.body.classList.add("light-mode");
+  btn.textContent = "الوضع الأسود";
+}
+btn.onclick = () => {
+  const light = document.body.classList.toggle("light-mode");
+  localStorage.setItem("nexora-theme", light ? "light" : "dark");
+  btn.textContent = light ? "الوضع الأسود" : "الوضع الأبيض";
+};
+</script>
 </html>
