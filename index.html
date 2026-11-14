@@ -4,84 +4,331 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NEXORA AI</title>
+<title>ALEX AI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#080811;color:white;font-family:Arial}
-header{padding:20px;color:#a855ff;font-size:25px;font-weight:bold;border-bottom:1px solid #29203e}
-main{max-width:800px;margin:auto;padding:25px}
-h1{text-align:center;margin-top:70px;font-size:35px}
-h1 span{color:#a855ff}
+body{
+margin:0;
+background:#080808;
+color:#fff;
+font-family:Arial,sans-serif;
+transition:.2s
+}
+header{
+padding:20px;
+font-size:25px;
+font-weight:bold;
+border-bottom:1px solid #292929;
+display:flex;
+justify-content:space-between;
+align-items:center
+}
+main{max-width:850px;margin:auto;padding:20px}
+h1{text-align:center;margin-top:45px;font-size:34px}
+h1 span{color:#aaa}
 p{text-align:center;color:#aaa}
-#chat{height:55vh;overflow:auto;padding:15px}
-.msg{padding:14px;margin:12px 0;border-radius:15px;line-height:1.7}
-.user{background:#282044}
-.bot{background:#151522}
-form{display:flex;gap:8px;background:#151522;padding:10px;border:1px solid #7030b8;border-radius:18px}
-input{flex:1;background:transparent;border:0;outline:0;color:white;padding:12px;font-size:16px}
-button{background:#8b35ff;color:white;border:0;border-radius:12px;padding:12px 20px}
-small{display:block;text-align:center;color:#777;margin-top:12px}
+.panel{
+background:#151515;
+border:1px solid #303030;
+border-radius:16px;
+padding:16px;
+margin:20px 0
+}
+input{
+width:100%;
+padding:14px;
+margin:7px 0;
+background:#090909;
+color:white;
+border:1px solid #444;
+border-radius:10px;
+font-size:15px
+}
+button{
+background:#fff;
+color:#000;
+border:0;
+border-radius:10px;
+padding:12px 17px;
+cursor:pointer;
+font-weight:bold;
+margin:4px
+}
+.secondary{
+background:#303030;
+color:white
+}
+#chat{
+height:48vh;
+overflow:auto;
+padding:10px
+}
+.msg{
+padding:14px;
+margin:10px 0;
+border-radius:14px;
+line-height:1.7;
+white-space:pre-wrap;
+overflow-wrap:anywhere
+}
+.user{background:#303030}
+.bot{
+background:#151515;
+border:1px solid #333
+}
+form#chatForm{
+display:flex;
+gap:7px;
+background:#151515;
+padding:8px;
+border:1px solid #444;
+border-radius:15px
+}
+#message{
+flex:1;
+min-width:0;
+background:transparent;
+border:0;
+outline:0;
+color:white;
+margin:0
+}
+small{
+display:block;
+text-align:center;
+color:#888;
+margin:12px
+}
+.hidden{display:none!important}
+
+/* الوضع الأبيض */
+body.light-mode{
+background:#f5f5f5;
+color:#111
+}
+body.light-mode header{border-color:#ddd}
+body.light-mode .panel,
+body.light-mode .bot,
+body.light-mode form#chatForm{
+background:#fff;
+color:#111;
+border-color:#ddd
+}
+body.light-mode input{
+background:#fff;
+color:#111;
+border-color:#ccc
+}
+body.light-mode .user{background:#e5e5e5}
+body.light-mode .secondary{
+background:#ddd;
+color:#111
+}
+body.light-mode p{color:#555}
 </style>
 </head>
+
 <body>
-<header>👑 NEXORA AI</header>
+
+<header>
+<span>◈ ALEX AI</span>
+<button id="themeBtn" class="secondary">الوضع الأبيض</button>
+</header>
+
 <main>
-<h1>أهلاً بك في <span>NEXORA AI</span></h1>
-<p>مساعدك الذكي في كل شيء ✨</p>
+
+<h1>أهلاً بك في <span>ALEX AI</span></h1>
+<p>مساعدك الذكي في كل شيء</p>
+
+<section id="auth" class="panel">
+<h3>تسجيل الدخول</h3>
+<input id="email" type="email" placeholder="البريد الإلكتروني">
+<input id="password" type="password" placeholder="كلمة المرور">
+<button id="loginBtn">دخول</button>
+<button id="signupBtn" class="secondary">إنشاء حساب</button>
+<p id="authMessage"></p>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel">
+<span id="userEmail"></span>
+<button id="logoutBtn" class="secondary">خروج</button>
+</div>
+
 <div id="chat"></div>
-<form id="form">
-<input id="input" placeholder="اكتب رسالتك هنا..." required>
-<button>➤</button>
+
+<form id="chatForm">
+<input id="message" placeholder="اكتب رسالتك هنا..." required>
+<button id="sendBtn">➤</button>
 </form>
-<small>نسخة تجريبية من NEXORA AI</small>
+
+<small>نسخة تجريبية من ALEX AI</small>
+</section>
+
 </main>
+
 <script>
-const form=document.getElementById("form");
-const input=document.getElementById("input");
-const chat=document.getElementById("chat");
-form.onsubmit=e=>{
+const SUPABASE_URL = "https://hbfdrtgmalvlixwuujgf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_vBz40TiOn08eysk3uiQhYQ_lLv_QphJ";
+
+const db = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
+
+const $ = id => document.getElementById(id);
+let currentUser = null;
+let history = [];
+
+function showMessage(id,text){
+$(id).textContent=text;
+}
+
+function historyKey(){
+return "alex-chat-"+currentUser.id;
+}
+
+function addMessage(role,text,save=true){
+const div=document.createElement("div");
+div.className="msg "+(role==="user"?"user":"bot");
+div.textContent=text;
+$("chat").appendChild(div);
+$("chat").scrollTop=$("chat").scrollHeight;
+
+if(save){
+history.push({role,text});
+localStorage.setItem(historyKey(),JSON.stringify(history));
+}
+}
+
+function loadHistory(){
+try{
+history=JSON.parse(localStorage.getItem(historyKey())||"[]");
+}catch{
+history=[];
+}
+$("chat").replaceChildren();
+history.forEach(item=>addMessage(item.role,item.text,false));
+}
+
+async function updateSession(session){
+currentUser=session?.user||null;
+$("auth").classList.toggle("hidden",!!currentUser);
+$("app").classList.toggle("hidden",!currentUser);
+
+if(currentUser){
+$("userEmail").textContent="الحساب: "+currentUser.email;
+loadHistory();
+}else{
+$("chat").replaceChildren();
+history=[];
+}
+}
+
+$("loginBtn").onclick=async()=>{
+const email=$("email").value.trim();
+const password=$("password").value;
+showMessage("authMessage","جاري تسجيل الدخول...");
+
+const {data,error}=await db.auth.signInWithPassword({email,password});
+
+if(error)return showMessage("authMessage",error.message);
+await updateSession(data.session);
+};
+
+$("signupBtn").onclick=async()=>{
+const email=$("email").value.trim();
+const password=$("password").value;
+
+if(password.length<6){
+return showMessage("authMessage","كلمة المرور لازم تكون 6 أحرف على الأقل");
+}
+
+showMessage("authMessage","جاري إنشاء الحساب...");
+
+const {data,error}=await db.auth.signUp({email,password});
+
+if(error)return showMessage("authMessage",error.message);
+
+if(data.session){
+await updateSession(data.session);
+}else{
+showMessage("authMessage","راجع بريدك الإلكتروني لتأكيد الحساب");
+}
+};
+
+$("logoutBtn").onclick=async()=>{
+await db.auth.signOut();
+await updateSession(null);
+};
+
+$("chatForm").onsubmit=async e=>{
 e.preventDefault();
-let text=input.value.trim();
-if(!text)return;
-chat.innerHTML+=`<div class="msg user">${text}</div>`;
-chat.innerHTML+=`<div class="msg bot">أهلاً بيك في NEXORA AI 💜<br>لسه بنجهز الذكاء الاصطناعي الحقيقي!</div>`;
-input.value="";
-chat.scrollTop=chat.scrollHeight;
-};
-</script>
-</body><style>
-body.light-mode {
-  background: #f5f5f5 !important;
-  color: #171717 !important;
-}
-body.light-mode div,
-body.light-mode section,
-body.light-mode header {
-  background-color: #fff !important;
-  color: #171717 !important;
-}
-body.light-mode input,
-body.light-mode textarea {
-  background: #fff !important;
-  color: #171717 !important;
-  border-color: #ccc !important;
-}
-</style>
 
-<button id="themeToggle" style="position:fixed;top:15px;right:15px;z-index:9999;padding:10px 15px;border-radius:20px;border:1px solid #888;cursor:pointer">
-الوضع الأبيض
-</button>
+const message=$("message").value.trim();
+if(!message||!currentUser)return;
 
-<script>
-const btn = document.getElementById("themeToggle");
-if (localStorage.getItem("nexora-theme") === "light") {
-  document.body.classList.add("light-mode");
-  btn.textContent = "الوضع الأسود";
+$("message").value="";
+addMessage("user",message);
+
+$("sendBtn").disabled=true;
+addMessage("bot","جاري التفكير...");
+
+try{
+const {data}=await db.auth.getSession();
+const token=data.session?.access_token;
+
+if(!token)throw new Error("سجل دخولك مرة تانية");
+
+const response=await fetch("/api/chat",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Authorization":"Bearer "+token
+},
+body:JSON.stringify({message})
+});
+
+const result=await response.json();
+if(!response.ok)throw new Error(result.error||"حصل خطأ");
+
+const last=$("chat").lastElementChild;
+last.textContent=result.reply||"مفيش رد متاح";
+history[history.length-1].text=last.textContent;
+localStorage.setItem(historyKey(),JSON.stringify(history));
+
+}catch(error){
+const last=$("chat").lastElementChild;
+last.textContent="حصل خطأ: "+error.message;
+history[history.length-1].text=last.textContent;
+localStorage.setItem(historyKey(),JSON.stringify(history));
+}finally{
+$("sendBtn").disabled=false;
+$("message").focus();
 }
-btn.onclick = () => {
-  const light = document.body.classList.toggle("light-mode");
-  localStorage.setItem("nexora-theme", light ? "light" : "dark");
-  btn.textContent = light ? "الوضع الأسود" : "الوضع الأبيض";
 };
+
+$("themeBtn").onclick=()=>{
+const light=document.body.classList.toggle("light-mode");
+localStorage.setItem("alex-theme",light?"light":"dark");
+$("themeBtn").textContent=light?"الوضع الأسود":"الوضع الأبيض";
+};
+
+if(localStorage.getItem("alex-theme")==="light"){
+document.body.classList.add("light-mode");
+$("themeBtn").textContent="الوضع الأسود";
+}
+
+db.auth.onAuthStateChange((_event,session)=>{
+updateSession(session);
+});
+
+db.auth.getSession().then(({data})=>{
+updateSession(data.session);
+});
 </script>
+
+</body>
 </html>
