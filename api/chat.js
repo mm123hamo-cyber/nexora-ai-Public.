@@ -1,6 +1,5 @@
 
 module.exports = async (req, res) => {
-  // Allow POST requests only
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed"
@@ -8,7 +7,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Check environment variables
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -21,7 +19,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Check login token
+    // Verify login
     const authorization = req.headers.authorization || "";
     const token = authorization.startsWith("Bearer ")
       ? authorization.slice(7)
@@ -33,11 +31,9 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Verify user with Supabase
     const authResponse = await fetch(
       `${SUPABASE_URL.replace(/\/$/, "")}/auth/v1/user`,
       {
-        method: "GET",
         headers: {
           apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${token}`
@@ -46,8 +42,6 @@ module.exports = async (req, res) => {
     );
 
     if (!authResponse.ok) {
-      console.error("Supabase authentication failed:", authResponse.status);
-
       return res.status(401).json({
         error: "Invalid login"
       });
@@ -56,10 +50,7 @@ module.exports = async (req, res) => {
     // Validate message
     const { message } = req.body || {};
 
-    if (
-      typeof message !== "string" ||
-      !message.trim()
-    ) {
+    if (typeof message !== "string" || !message.trim()) {
       return res.status(400).json({
         error: "Message is required"
       });
@@ -71,9 +62,9 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Send message to Gemini
+    // Gemini Interactions API
     const aiResponse = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/interactions",
       {
         method: "POST",
         headers: {
@@ -81,20 +72,14 @@ module.exports = async (req, res) => {
           "x-goog-api-key": GEMINI_API_KEY
         },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: message.trim() }
-              ]
-            }
-          ]
+          model: "gemini-3.8-flash",
+          input: message.trim()
         })
       }
     );
 
     const data = await aiResponse.json();
 
-    // Handle Gemini errors
     if (!aiResponse.ok) {
       console.error("Gemini API Error:", {
         status: aiResponse.status,
@@ -106,27 +91,22 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Check AI response
+    // Read AI response
     const reply =
-      data.candidates?.[0]?.content?.parts
-        ?.map(part => part.text || "")
-        .join("")
-        .trim();
+      data.output_text ||
+      data.interaction?.output_text ||
+      "";
 
-    if (!reply) {
-      console.error("Gemini returned no text:", {
-        promptFeedback: data.promptFeedback,
-        finishReason: data.candidates?.[0]?.finishReason
-      });
+    if (!reply.trim()) {
+      console.error("Empty Gemini response:", data);
 
       return res.status(502).json({
         error: "AI returned an empty response"
       });
     }
 
-    // Return successful response
     return res.status(200).json({
-      reply
+      reply: reply.trim()
     });
 
   } catch (error) {
