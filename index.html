@@ -56,10 +56,8 @@ cursor:pointer;
 font-weight:bold;
 margin:4px
 }
-.secondary{
-background:#303030;
-color:white
-}
+button:disabled{opacity:.5;cursor:not-allowed}
+.secondary{background:#303030;color:white}
 #chat{
 height:48vh;
 overflow:auto;
@@ -103,7 +101,6 @@ margin:12px
 }
 .hidden{display:none!important}
 
-/* الوضع الأبيض */
 body.light-mode{
 background:#f5f5f5;
 color:#111
@@ -152,6 +149,7 @@ body.light-mode p{color:#555}
 </section>
 
 <section id="app" class="hidden">
+
 <div class="panel">
 <span id="userEmail"></span>
 <button id="logoutBtn" class="secondary">خروج</button>
@@ -161,7 +159,7 @@ body.light-mode p{color:#555}
 
 <form id="chatForm">
 <input id="message" placeholder="اكتب رسالتك هنا..." required>
-<button id="sendBtn">➤</button>
+<button id="sendBtn" type="submit">➤</button>
 </form>
 
 <small>نسخة تجريبية من ALEX AI</small>
@@ -171,163 +169,329 @@ body.light-mode p{color:#555}
 
 <script>
 const SUPABASE_URL = "https://hbfdrtgmalvlixwuujgf.supabase.co";
+
 const SUPABASE_ANON_KEY = "sb_publishable_vBz40TiOn08eysk3uiQhYQ_lLv_QphJ";
 
 const db = window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_ANON_KEY
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
 );
 
 const $ = id => document.getElementById(id);
+
 let currentUser = null;
 let history = [];
+let sending = false;
 
 function showMessage(id,text){
-$(id).textContent=text;
+  $(id).textContent = text;
 }
 
 function historyKey(){
-return "alex-chat-"+currentUser.id;
+  return "alex-chat-" + currentUser.id;
+}
+
+function saveHistory(){
+  if(!currentUser)return;
+
+  localStorage.setItem(
+    historyKey(),
+    JSON.stringify(history)
+  );
 }
 
 function addMessage(role,text,save=true){
-const div=document.createElement("div");
-div.className="msg "+(role==="user"?"user":"bot");
-div.textContent=text;
-$("chat").appendChild(div);
-$("chat").scrollTop=$("chat").scrollHeight;
+  const div = document.createElement("div");
 
-if(save){
-history.push({role,text});
-localStorage.setItem(historyKey(),JSON.stringify(history));
-}
+  div.className =
+    "msg " + (role === "user" ? "user" : "bot");
+
+  div.textContent = text;
+
+  $("chat").appendChild(div);
+  $("chat").scrollTop = $("chat").scrollHeight;
+
+  if(save){
+    history.push({role,text});
+    saveHistory();
+  }
+
+  return div;
 }
 
 function loadHistory(){
-try{
-history=JSON.parse(localStorage.getItem(historyKey())||"[]");
-}catch{
-history=[];
-}
-$("chat").replaceChildren();
-history.forEach(item=>addMessage(item.role,item.text,false));
+  try{
+    const saved = JSON.parse(
+      localStorage.getItem(historyKey()) || "[]"
+    );
+
+    history = Array.isArray(saved) ? saved : [];
+
+  }catch{
+    history = [];
+  }
+
+  $("chat").replaceChildren();
+
+  history.forEach(item=>{
+    addMessage(item.role,item.text,false);
+  });
 }
 
 async function updateSession(session){
-currentUser=session?.user||null;
-$("auth").classList.toggle("hidden",!!currentUser);
-$("app").classList.toggle("hidden",!currentUser);
+  currentUser = session?.user || null;
 
-if(currentUser){
-$("userEmail").textContent="الحساب: "+currentUser.email;
-loadHistory();
-}else{
-$("chat").replaceChildren();
-history=[];
+  $("auth").classList.toggle("hidden",!!currentUser);
+  $("app").classList.toggle("hidden",!currentUser);
+
+  if(currentUser){
+    $("userEmail").textContent =
+      "الحساب: " + currentUser.email;
+
+    loadHistory();
+  }else{
+    $("chat").replaceChildren();
+    history = [];
+  }
 }
-}
 
-$("loginBtn").onclick=async()=>{
-const email=$("email").value.trim();
-const password=$("password").value;
-showMessage("authMessage","جاري تسجيل الدخول...");
+// تسجيل الدخول
+$("loginBtn").onclick = async()=>{
+  const email = $("email").value.trim();
+  const password = $("password").value;
 
-const {data,error}=await db.auth.signInWithPassword({email,password});
+  if(!email || !password){
+    return showMessage(
+      "authMessage",
+      "اكتب البريد الإلكتروني وكلمة المرور"
+    );
+  }
 
-if(error)return showMessage("authMessage",error.message);
-await updateSession(data.session);
+  $("loginBtn").disabled = true;
+
+  showMessage(
+    "authMessage",
+    "جاري تسجيل الدخول..."
+  );
+
+  try{
+    const {data,error} =
+      await db.auth.signInWithPassword({
+        email,
+        password
+      });
+
+    if(error)throw error;
+
+    await updateSession(data.session);
+
+  }catch(error){
+    showMessage(
+      "authMessage",
+      error.message || "تعذر تسجيل الدخول"
+    );
+  }finally{
+    $("loginBtn").disabled = false;
+  }
 };
 
-$("signupBtn").onclick=async()=>{
-const email=$("email").value.trim();
-const password=$("password").value;
+// إنشاء حساب
+$("signupBtn").onclick = async()=>{
+  const email = $("email").value.trim();
+  const password = $("password").value;
 
-if(password.length<6){
-return showMessage("authMessage","كلمة المرور لازم تكون 6 أحرف على الأقل");
-}
+  if(!email || !password){
+    return showMessage(
+      "authMessage",
+      "اكتب البريد الإلكتروني وكلمة المرور"
+    );
+  }
 
-showMessage("authMessage","جاري إنشاء الحساب...");
+  if(password.length < 6){
+    return showMessage(
+      "authMessage",
+      "كلمة المرور لازم تكون 6 أحرف على الأقل"
+    );
+  }
 
-const {data,error}=await db.auth.signUp({email,password});
+  $("signupBtn").disabled = true;
 
-if(error)return showMessage("authMessage",error.message);
+  showMessage(
+    "authMessage",
+    "جاري إنشاء الحساب..."
+  );
 
-if(data.session){
-await updateSession(data.session);
-}else{
-showMessage("authMessage","راجع بريدك الإلكتروني لتأكيد الحساب");
-}
+  try{
+    const {data,error} = await db.auth.signUp({
+      email,
+      password
+    });
+
+    if(error)throw error;
+
+    if(data.session){
+      await updateSession(data.session);
+    }else{
+      showMessage(
+        "authMessage",
+        "راجع بريدك الإلكتروني لتأكيد الحساب"
+      );
+    }
+
+  }catch(error){
+    showMessage(
+      "authMessage",
+      error.message || "تعذر إنشاء الحساب"
+    );
+  }finally{
+    $("signupBtn").disabled = false;
+  }
 };
 
-$("logoutBtn").onclick=async()=>{
-await db.auth.signOut();
-await updateSession(null);
+// تسجيل الخروج
+$("logoutBtn").onclick = async()=>{
+  const {error} = await db.auth.signOut();
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  await updateSession(null);
 };
 
-$("chatForm").onsubmit=async e=>{
-e.preventDefault();
+// إرسال الرسائل
+$("chatForm").onsubmit = async e=>{
+  e.preventDefault();
 
-const message=$("message").value.trim();
-if(!message||!currentUser)return;
+  if(sending || !currentUser)return;
 
-$("message").value="";
-addMessage("user",message);
+  const message = $("message").value.trim();
 
-$("sendBtn").disabled=true;
-addMessage("bot","جاري التفكير...");
+  if(!message)return;
 
-try{
-const {data}=await db.auth.getSession();
-const token=data.session?.access_token;
+  sending = true;
 
-if(!token)throw new Error("سجل دخولك مرة تانية");
+  $("message").value = "";
 
-const response=await fetch("/api/chat",{
-method:"POST",
-headers:{
-"Content-Type":"application/json",
-"Authorization":"Bearer "+token
-},
-body:JSON.stringify({message})
-});
+  addMessage("user",message);
 
-const result=await response.json();
-if(!response.ok)throw new Error(result.error||"حصل خطأ");
+  $("sendBtn").disabled = true;
 
-const last=$("chat").lastElementChild;
-last.textContent=result.reply||"مفيش رد متاح";
-history[history.length-1].text=last.textContent;
-localStorage.setItem(historyKey(),JSON.stringify(history));
+  const thinkingMessage = addMessage(
+    "bot",
+    "جاري التفكير..."
+  );
 
-}catch(error){
-const last=$("chat").lastElementChild;
-last.textContent="حصل خطأ: "+error.message;
-history[history.length-1].text=last.textContent;
-localStorage.setItem(historyKey(),JSON.stringify(history));
-}finally{
-$("sendBtn").disabled=false;
-$("message").focus();
+  try{
+    const {data,error} = await db.auth.getSession();
+
+    if(error)throw error;
+
+    const token = data.session?.access_token;
+
+    if(!token){
+      throw new Error("سجل دخولك مرة تانية");
+    }
+
+    const controller = new AbortController();
+
+    const timeout = setTimeout(()=>{
+      controller.abort();
+    },60000);
+
+    let response;
+
+    try{
+      response = await fetch("/api/chat",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer " + token
+        },
+        body:JSON.stringify({message}),
+        signal:controller.signal
+      });
+    }finally{
+      clearTimeout(timeout);
+    }
+
+    const result = await response.json();
+
+    if(!response.ok){
+      throw new Error(
+        result.error || "حصل خطأ في خدمة الذكاء الاصطناعي"
+      );
+    }
+
+    thinkingMessage.textContent =
+      result.reply || "مفيش رد متاح";
+
+  }catch(error){
+
+    if(error.name === "AbortError"){
+      thinkingMessage.textContent =
+        "الطلب استغرق وقت طويل. حاول تاني.";
+    }else{
+      thinkingMessage.textContent =
+        "حصل خطأ: " + error.message;
+    }
+
+  }finally{
+
+    const index = history.length - 1;
+
+    if(index >= 0){
+      history[index].text =
+        thinkingMessage.textContent;
+
+      saveHistory();
+    }
+
+    sending = false;
+    $("sendBtn").disabled = false;
+    $("message").focus();
+
+    $("chat").scrollTop =
+      $("chat").scrollHeight;
+  }
+};
+
+// تغيير الوضع
+$("themeBtn").onclick = ()=>{
+  const light =
+    document.body.classList.toggle("light-mode");
+
+  localStorage.setItem(
+    "alex-theme",
+    light ? "light" : "dark"
+  );
+
+  $("themeBtn").textContent =
+    light ? "الوضع الأسود" : "الوضع الأبيض";
+};
+
+// استرجاع الوضع المحفوظ
+if(localStorage.getItem("alex-theme") === "light"){
+  document.body.classList.add("light-mode");
+  $("themeBtn").textContent = "الوضع الأسود";
 }
-};
 
-$("themeBtn").onclick=()=>{
-const light=document.body.classList.toggle("light-mode");
-localStorage.setItem("alex-theme",light?"light":"dark");
-$("themeBtn").textContent=light?"الوضع الأسود":"الوضع الأبيض";
-};
-
-if(localStorage.getItem("alex-theme")==="light"){
-document.body.classList.add("light-mode");
-$("themeBtn").textContent="الوضع الأسود";
-}
-
+// متابعة تسجيل الدخول
 db.auth.onAuthStateChange((_event,session)=>{
-updateSession(session);
+  updateSession(session);
 });
 
-db.auth.getSession().then(({data})=>{
-updateSession(data.session);
+// استرجاع الجلسة عند فتح الموقع
+db.auth.getSession().then(({data,error})=>{
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  updateSession(data.session);
 });
+
 </script>
 
 </body>
