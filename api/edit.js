@@ -12,6 +12,26 @@ export default async function handler(req, res) {
   }
 
   try {
+    // التحقق من تسجيل الدخول
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+    if (!token || !supabaseUrl || !supabaseKey) {
+      return res.status(401).json({ error: "سجل دخولك أولاً" });
+    }
+
+    const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!authResponse.ok) {
+      return res.status(401).json({ error: "جلسة الدخول غير صالحة" });
+    }
+
     const { image, prompt } = req.body || {};
 
     if (!image || !prompt?.trim()) {
@@ -21,9 +41,7 @@ export default async function handler(req, res) {
     }
 
     if (image.length > 4000000) {
-      return res.status(413).json({
-        error: "حجم الصورة كبير",
-      });
+      return res.status(413).json({ error: "حجم الصورة كبير" });
     }
 
     const match = image.match(
@@ -31,9 +49,7 @@ export default async function handler(req, res) {
     );
 
     if (!match) {
-      return res.status(400).json({
-        error: "صيغة الصورة غير مدعومة",
-      });
+      return res.status(400).json({ error: "صيغة الصورة غير مدعومة" });
     }
 
     const apiKey = process.env.PHOTOROOM_API_KEY;
@@ -77,9 +93,8 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const error = await response.text();
-
       return res.status(response.status).json({
-        error: error.slice(0, 500),
+        error: error.slice(0, 500) || "فشل تعديل الصورة",
       });
     }
 
@@ -94,11 +109,19 @@ export default async function handler(req, res) {
 
     const result = Buffer.from(await response.arrayBuffer());
 
+    if (!result.length) {
+      return res.status(502).json({
+        error: "الصورة الناتجة فارغة",
+      });
+    }
+
     return res.status(200).json({
       image: `data:${contentType};base64,${result.toString("base64")}`,
     });
 
   } catch (error) {
+    console.error("Edit API error:", error);
+
     return res.status(500).json({
       error: "حصل خطأ أثناء تعديل الصورة",
     });
