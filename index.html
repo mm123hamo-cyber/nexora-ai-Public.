@@ -539,19 +539,37 @@ if(error)throw error;
 const token=data.session?.access_token;
 if(!token)throw new Error("سجل دخولك مرة تانية");
 
-const history=chat.messages.slice(0,-1).slice(-20).map(item=>{
-if(item.role==="user"&&item.image){
+/* إرسال آخر 4 رسائل فقط، والصورة الحالية فقط */
+const recentMessages=chat.messages.slice(0,-1).slice(-4);
+
+const history=recentMessages.map((item,index)=>{
+const isCurrentMessage=index===recentMessages.length-1;
+
+if(item.role==="user"&&isCurrentMessage&&image){
 const parts=[];
-if(item.text)parts.push({type:"text",text:item.text});
-parts.push({type:"image_url",image_url:{url:item.image}});
+
+if(item.text){
+parts.push({type:"text",text:item.text.slice(0,1500)});
+}
+
+parts.push({
+type:"image_url",
+image_url:{url:image}
+});
+
 return {role:"user",content:parts};
 }
-return {role:item.role,content:item.text||""};
+
+return {
+role:item.role,
+content:(item.text||"").slice(0,1500)
+};
 });
 
 const controller=new AbortController();
 const timeout=setTimeout(()=>controller.abort(),60000);
 let response;
+
 try{
 response=await fetch("/api/chat",{
 method:"POST",
@@ -562,12 +580,15 @@ headers:{
 body:JSON.stringify({messages:history}),
 signal:controller.signal
 });
-}finally{clearTimeout(timeout)}
+}finally{
+clearTimeout(timeout);
+}
 
 const result=await response.json();
 if(!response.ok)throw new Error(result.error||"حصل خطأ في خدمة الذكاء الاصطناعي");
 
 chat.messages[chat.messages.length-1].text=result.reply||"مفيش رد متاح";
+
 }catch(error){
 chat.messages[chat.messages.length-1].text=
 error.name==="AbortError"?"الطلب استغرق وقت طويل. حاول تاني.":"حصل خطأ: "+error.message;
