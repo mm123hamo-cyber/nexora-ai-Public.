@@ -1,3 +1,4 @@
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -19,18 +20,65 @@ module.exports = async (req, res) => {
           content: body.message || body.prompt || body.input || ""
         }];
 
-    messages = messages.filter(
-      m => ["user", "assistant"].includes(m.role) &&
-           typeof m.content === "string"
-    );
+    messages = messages
+      .filter(m =>
+        m &&
+        ["user", "assistant"].includes(m.role)
+      )
+      .slice(-30)
+      .map(m => {
+        if (typeof m.content === "string") {
+          return {
+            role: m.role,
+            content: m.content.slice(0, 12000)
+          };
+        }
+
+        if (m.role === "user" && Array.isArray(m.content)) {
+          const parts = m.content
+            .filter(part => {
+              if (part?.type === "text") {
+                return typeof part.text === "string";
+              }
+
+              if (part?.type === "image_url") {
+                const url = part.image_url?.url;
+                return typeof url === "string" &&
+                  /^data:image\/(jpeg|png|webp);base64,/i.test(url) &&
+                  url.length <= 4000000;
+              }
+
+              return false;
+            })
+            .slice(0, 4);
+
+          return {
+            role: "user",
+            content: parts
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean)
+      .filter(m =>
+        typeof m.content === "string"
+          ? m.content.trim().length > 0
+          : m.content.length > 0
+      );
 
     if (!messages.length) {
       return res.status(400).json({ error: "Message is empty" });
     }
 
+    const hasImage = messages.some(m =>
+      Array.isArray(m.content) &&
+      m.content.some(part => part.type === "image_url")
+    );
+
     messages.unshift({
       role: "system",
-      content: "You are ALEX AI, a helpful assistant. Reply naturally in the user's language, especially Egyptian Arabic when appropriate."
+      content: "You are ALEX AI, a helpful assistant. Reply naturally in the user's language, especially Egyptian Arabic when appropriate. If the user sends an image, understand it and answer their question about it."
     });
 
     const response = await fetch(
@@ -42,7 +90,9 @@ module.exports = async (req, res) => {
           "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "openai/gpt-oss-20b",
+          model: hasImage
+            ? "qwen/qwen3.8-27b"
+            : "openai/gpt-oss-20b",
           messages,
           max_completion_tokens: 1024
         })
@@ -73,4 +123,5 @@ module.exports = async (req, res) => {
     });
   }
 };
+
 
