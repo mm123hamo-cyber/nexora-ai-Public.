@@ -10,120 +10,94 @@
 <style>
 *{box-sizing:border-box}
 body{
-margin:0;
-background:#080808;
-color:#fff;
-font-family:Arial,sans-serif;
-transition:.2s
+margin:0;background:#080808;color:#fff;
+font-family:Arial,sans-serif;transition:.2s
 }
 header{
-padding:20px;
-font-size:25px;
-font-weight:bold;
+padding:16px 20px;font-size:25px;font-weight:bold;
 border-bottom:1px solid #292929;
-display:flex;
-justify-content:space-between;
-align-items:center
+display:flex;justify-content:space-between;align-items:center
 }
-main{max-width:850px;margin:auto;padding:20px}
-h1{text-align:center;margin-top:45px;font-size:34px}
+main{max-width:950px;margin:auto;padding:15px}
+h1{text-align:center;margin-top:35px;font-size:34px}
 h1 span{color:#aaa}
 p{text-align:center;color:#aaa}
 .panel{
-background:#151515;
-border:1px solid #303030;
-border-radius:16px;
-padding:16px;
-margin:20px 0
+background:#151515;border:1px solid #303030;
+border-radius:16px;padding:16px;margin:15px 0
 }
 input{
-width:100%;
-padding:14px;
-margin:7px 0;
-background:#090909;
-color:white;
-border:1px solid #444;
-border-radius:10px;
-font-size:15px
+width:100%;padding:14px;margin:7px 0;
+background:#090909;color:white;border:1px solid #444;
+border-radius:10px;font-size:15px
 }
 button{
-background:#fff;
-color:#000;
-border:0;
-border-radius:10px;
-padding:12px 17px;
-cursor:pointer;
-font-weight:bold;
-margin:4px
+background:#fff;color:#000;border:0;border-radius:10px;
+padding:12px 17px;cursor:pointer;font-weight:bold;margin:4px
 }
 button:disabled{opacity:.5;cursor:not-allowed}
 .secondary{background:#303030;color:white}
+.hidden{display:none!important}
+#workspace{
+display:grid;grid-template-columns:210px 1fr;gap:12px
+}
+#sidebar{min-width:0}
+#chatList{
+display:flex;flex-direction:column;gap:7px;
+max-height:55vh;overflow:auto;margin-top:12px
+}
+.chat-item{
+width:100%;text-align:right;background:#252525;
+color:#ddd;overflow:hidden;text-overflow:ellipsis;
+white-space:nowrap;margin:0
+}
+.chat-item.active{background:#555;color:white}
 #chat{
-height:48vh;
-overflow:auto;
-padding:10px
+height:48vh;overflow:auto;padding:10px
 }
 .msg{
-padding:14px;
-margin:10px 0;
-border-radius:14px;
-line-height:1.7;
-white-space:pre-wrap;
-overflow-wrap:anywhere
+padding:14px;margin:10px 0;border-radius:14px;
+line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere
 }
 .user{background:#303030}
-.bot{
-background:#151515;
-border:1px solid #333
-}
+.bot{background:#151515;border:1px solid #333}
 form#chatForm{
-display:flex;
-gap:7px;
-background:#151515;
-padding:8px;
-border:1px solid #444;
-border-radius:15px
+display:flex;gap:7px;background:#151515;padding:8px;
+border:1px solid #444;border-radius:15px
 }
 #message{
-flex:1;
-min-width:0;
-background:transparent;
-border:0;
-outline:0;
-color:white;
-margin:0
+flex:1;min-width:0;background:transparent;
+border:0;outline:0;color:white;margin:0
 }
-small{
-display:block;
-text-align:center;
-color:#888;
-margin:12px
-}
-.hidden{display:none!important}
+small{display:block;text-align:center;color:#888;margin:12px}
 
-body.light-mode{
-background:#f5f5f5;
-color:#111
-}
+body.light-mode{background:#f5f5f5;color:#111}
 body.light-mode header{border-color:#ddd}
 body.light-mode .panel,
 body.light-mode .bot,
 body.light-mode form#chatForm{
-background:#fff;
-color:#111;
-border-color:#ddd
+background:#fff;color:#111;border-color:#ddd
 }
 body.light-mode input{
-background:#fff;
-color:#111;
-border-color:#ccc
+background:#fff;color:#111;border-color:#ccc
 }
 body.light-mode .user{background:#e5e5e5}
-body.light-mode .secondary{
-background:#ddd;
-color:#111
-}
+body.light-mode .secondary{background:#ddd;color:#111}
 body.light-mode p{color:#555}
+body.light-mode .chat-item{background:#e5e5e5;color:#111}
+body.light-mode .chat-item.active{background:#bbb;color:#111}
+
+@media(max-width:600px){
+#workspace{grid-template-columns:1fr}
+#sidebar{order:1}
+#chatArea{order:2}
+#chatList{
+flex-direction:row;max-height:none;
+overflow-x:auto;padding-bottom:5px
+}
+.chat-item{min-width:130px;width:auto}
+#chat{height:43vh}
+}
 </style>
 </head>
 
@@ -155,12 +129,24 @@ body.light-mode p{color:#555}
 <button id="logoutBtn" class="secondary">خروج</button>
 </div>
 
-<div id="chat"></div>
+<div id="workspace">
+
+<aside id="sidebar" class="panel">
+<button id="newChatBtn">＋ شات جديد</button>
+<h3>محادثاتي</h3>
+<div id="chatList"></div>
+</aside>
+
+<div id="chatArea">
+<div id="chat" class="panel"></div>
 
 <form id="chatForm">
 <input id="message" placeholder="اكتب رسالتك هنا..." required>
 <button id="sendBtn" type="submit">➤</button>
 </form>
+</div>
+
+</div>
 
 <small>نسخة تجريبية من ALEX AI</small>
 </section>
@@ -169,7 +155,6 @@ body.light-mode p{color:#555}
 
 <script>
 const SUPABASE_URL = "https://hbfdrtgmalvlixwuujgf.supabase.co";
-
 const SUPABASE_ANON_KEY = "sb_publishable_vBz40TiOn08eysk3uiQhYQ_lLv_QphJ";
 
 const db = window.supabase.createClient(
@@ -180,65 +165,143 @@ const db = window.supabase.createClient(
 const $ = id => document.getElementById(id);
 
 let currentUser = null;
-let history = [];
+let chats = [];
+let activeChatId = null;
 let sending = false;
 
 function showMessage(id,text){
   $(id).textContent = text;
 }
 
-function historyKey(){
+function storageKey(){
+  return "alex-chats-" + currentUser.id;
+}
+
+function oldStorageKey(){
   return "alex-chat-" + currentUser.id;
 }
 
-function saveHistory(){
+function activeChat(){
+  return chats.find(c => c.id === activeChatId);
+}
+
+function saveChats(){
   if(!currentUser)return;
 
   localStorage.setItem(
-    historyKey(),
-    JSON.stringify(history)
+    storageKey(),
+    JSON.stringify(chats)
   );
 }
 
-function addMessage(role,text,save=true){
-  const div = document.createElement("div");
-
-  div.className =
-    "msg " + (role === "user" ? "user" : "bot");
-
-  div.textContent = text;
-
-  $("chat").appendChild(div);
-  $("chat").scrollTop = $("chat").scrollHeight;
-
-  if(save){
-    history.push({role,text});
-    saveHistory();
-  }
-
-  return div;
-}
-
-function loadHistory(){
-  try{
-    const saved = JSON.parse(
-      localStorage.getItem(historyKey()) || "[]"
-    );
-
-    history = Array.isArray(saved) ? saved : [];
-
-  }catch{
-    history = [];
-  }
-
+function renderChat(){
+  const chat = activeChat();
   $("chat").replaceChildren();
 
-  history.forEach(item=>{
-    addMessage(item.role,item.text,false);
+  if(!chat)return;
+
+  chat.messages.forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "msg " +
+      (item.role === "user" ? "user" : "bot");
+    div.textContent = item.text;
+    $("chat").appendChild(div);
+  });
+
+  $("chat").scrollTop = $("chat").scrollHeight;
+}
+
+function renderChatList(){
+  $("chatList").replaceChildren();
+
+  chats.slice().reverse().forEach(chat=>{
+    const btn = document.createElement("button");
+
+    btn.className = "chat-item" +
+      (chat.id === activeChatId ? " active" : "");
+
+    const firstMessage = chat.messages.find(
+      m => m.role === "user"
+    );
+
+    btn.textContent = chat.title ||
+      (firstMessage ? firstMessage.text.slice(0,25) : "محادثة جديدة");
+
+    btn.disabled = sending;
+
+    btn.onclick = ()=>{
+      if(sending)return;
+      activeChatId = chat.id;
+      renderChat();
+      renderChatList();
+    };
+
+    $("chatList").appendChild(btn);
   });
 }
 
-async function updateSession(session){
+function saveAndRender(){
+  saveChats();
+  renderChat();
+  renderChatList();
+}
+
+function createNewChat(){
+  if(sending)return;
+
+  const chat = {
+    id: String(Date.now()),
+    title: "محادثة جديدة",
+    messages: []
+  };
+
+  chats.push(chat);
+  activeChatId = chat.id;
+
+  saveAndRender();
+}
+
+function loadChats(){
+  try{
+    const saved = localStorage.getItem(storageKey());
+
+    if(saved){
+      const parsed = JSON.parse(saved);
+      chats = Array.isArray(parsed) ? parsed : [];
+    }else{
+      // نقل المحادثة القديمة تلقائياً
+      const old = JSON.parse(
+        localStorage.getItem(oldStorageKey()) || "[]"
+      );
+
+      chats = [];
+
+      if(Array.isArray(old) && old.length){
+        chats.push({
+          id: String(Date.now()),
+          title: "المحادثة القديمة",
+          messages: old
+        });
+      }
+    }
+  }catch{
+    chats = [];
+  }
+
+  if(!chats.length){
+    chats = [{
+      id: String(Date.now()),
+      title: "محادثة جديدة",
+      messages: []
+    }];
+  }
+
+  activeChatId = chats[chats.length - 1].id;
+
+  saveAndRender();
+}
+
+function updateSession(session){
   currentUser = session?.user || null;
 
   $("auth").classList.toggle("hidden",!!currentUser);
@@ -248,10 +311,12 @@ async function updateSession(session){
     $("userEmail").textContent =
       "الحساب: " + currentUser.email;
 
-    loadHistory();
+    loadChats();
   }else{
     $("chat").replaceChildren();
-    history = [];
+    $("chatList").replaceChildren();
+    chats = [];
+    activeChatId = null;
   }
 }
 
@@ -261,35 +326,22 @@ $("loginBtn").onclick = async()=>{
   const password = $("password").value;
 
   if(!email || !password){
-    return showMessage(
-      "authMessage",
-      "اكتب البريد الإلكتروني وكلمة المرور"
-    );
+    return showMessage("authMessage","اكتب البريد الإلكتروني وكلمة المرور");
   }
 
   $("loginBtn").disabled = true;
-
-  showMessage(
-    "authMessage",
-    "جاري تسجيل الدخول..."
-  );
+  showMessage("authMessage","جاري تسجيل الدخول...");
 
   try{
-    const {data,error} =
-      await db.auth.signInWithPassword({
-        email,
-        password
-      });
+    const {data,error} = await db.auth.signInWithPassword({
+      email,password
+    });
 
     if(error)throw error;
-
     await updateSession(data.session);
 
   }catch(error){
-    showMessage(
-      "authMessage",
-      error.message || "تعذر تسجيل الدخول"
-    );
+    showMessage("authMessage",error.message || "تعذر تسجيل الدخول");
   }finally{
     $("loginBtn").disabled = false;
   }
@@ -301,30 +353,19 @@ $("signupBtn").onclick = async()=>{
   const password = $("password").value;
 
   if(!email || !password){
-    return showMessage(
-      "authMessage",
-      "اكتب البريد الإلكتروني وكلمة المرور"
-    );
+    return showMessage("authMessage","اكتب البريد الإلكتروني وكلمة المرور");
   }
 
   if(password.length < 6){
-    return showMessage(
-      "authMessage",
-      "كلمة المرور لازم تكون 6 أحرف على الأقل"
-    );
+    return showMessage("authMessage","كلمة المرور لازم تكون 6 أحرف على الأقل");
   }
 
   $("signupBtn").disabled = true;
-
-  showMessage(
-    "authMessage",
-    "جاري إنشاء الحساب..."
-  );
+  showMessage("authMessage","جاري إنشاء الحساب...");
 
   try{
     const {data,error} = await db.auth.signUp({
-      email,
-      password
+      email,password
     });
 
     if(error)throw error;
@@ -332,17 +373,11 @@ $("signupBtn").onclick = async()=>{
     if(data.session){
       await updateSession(data.session);
     }else{
-      showMessage(
-        "authMessage",
-        "راجع بريدك الإلكتروني لتأكيد الحساب"
-      );
+      showMessage("authMessage","راجع بريدك الإلكتروني لتأكيد الحساب");
     }
 
   }catch(error){
-    showMessage(
-      "authMessage",
-      error.message || "تعذر إنشاء الحساب"
-    );
+    showMessage("authMessage",error.message || "تعذر إنشاء الحساب");
   }finally{
     $("signupBtn").disabled = false;
   }
@@ -360,6 +395,9 @@ $("logoutBtn").onclick = async()=>{
   await updateSession(null);
 };
 
+// شات جديد
+$("newChatBtn").onclick = createNewChat;
+
 // إرسال الرسائل
 $("chatForm").onsubmit = async e=>{
   e.preventDefault();
@@ -367,32 +405,40 @@ $("chatForm").onsubmit = async e=>{
   if(sending || !currentUser)return;
 
   const message = $("message").value.trim();
-
   if(!message)return;
 
-  sending = true;
+  const chat = activeChat();
+  if(!chat)return;
 
+  sending = true;
   $("message").value = "";
 
-  addMessage("user",message);
+  chat.messages.push({
+    role:"user",
+    text:message
+  });
 
+  if(chat.title === "محادثة جديدة"){
+    chat.title = message.slice(0,25);
+  }
+
+  saveAndRender();
   $("sendBtn").disabled = true;
+  $("newChatBtn").disabled = true;
 
-  const thinkingMessage = addMessage(
-    "bot",
-    "جاري التفكير..."
-  );
+  chat.messages.push({
+    role:"assistant",
+    text:"جاري التفكير..."
+  });
+
+  saveAndRender();
 
   try{
     const {data,error} = await db.auth.getSession();
-
     if(error)throw error;
 
     const token = data.session?.access_token;
-
-    if(!token){
-      throw new Error("سجل دخولك مرة تانية");
-    }
+    if(!token)throw new Error("سجل دخولك مرة تانية");
 
     const controller = new AbortController();
 
@@ -424,36 +470,25 @@ $("chatForm").onsubmit = async e=>{
       );
     }
 
-    thinkingMessage.textContent =
+    chat.messages[chat.messages.length - 1].text =
       result.reply || "مفيش رد متاح";
 
   }catch(error){
 
-    if(error.name === "AbortError"){
-      thinkingMessage.textContent =
-        "الطلب استغرق وقت طويل. حاول تاني.";
-    }else{
-      thinkingMessage.textContent =
-        "حصل خطأ: " + error.message;
-    }
+    chat.messages[chat.messages.length - 1].text =
+      error.name === "AbortError"
+      ? "الطلب استغرق وقت طويل. حاول تاني."
+      : "حصل خطأ: " + error.message;
 
   }finally{
-
-    const index = history.length - 1;
-
-    if(index >= 0){
-      history[index].text =
-        thinkingMessage.textContent;
-
-      saveHistory();
-    }
+    saveChats();
+    renderChat();
+    renderChatList();
 
     sending = false;
     $("sendBtn").disabled = false;
+    $("newChatBtn").disabled = false;
     $("message").focus();
-
-    $("chat").scrollTop =
-      $("chat").scrollHeight;
   }
 };
 
@@ -482,16 +517,14 @@ db.auth.onAuthStateChange((_event,session)=>{
   updateSession(session);
 });
 
-// استرجاع الجلسة عند فتح الموقع
+// استرجاع الجلسة
 db.auth.getSession().then(({data,error})=>{
   if(error){
     console.error(error);
     return;
   }
-
   updateSession(data.session);
 });
-
 </script>
 
 </body>
