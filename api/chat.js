@@ -1,113 +1,76 @@
-
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
 
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !GEMINI_API_KEY) {
-      return res.status(500).json({ error: "Server configuration error" });
+    if (!apiKey) {
+      return res.status(500).json({ error: "GROQ_API_KEY is missing" });
     }
 
-    const authorization = req.headers.authorization || "";
-    const token = authorization.startsWith("Bearer ")
-      ? authorization.slice(7)
-      : "";
+    const body = req.body || {};
 
-    if (!token) {
-      return res.status(401).json({ error: "Please login first" });
+    let messages = Array.isArray(body.messages)
+      ? body.messages
+      : [{
+          role: "user",
+          content: body.message || body.prompt || body.input || ""
+        }];
+
+    messages = messages.filter(
+      m => ["user", "assistant"].includes(m.role) &&
+           typeof m.content === "string"
+    );
+
+    if (!messages.length) {
+      return res.status(400).json({ error: "Message is empty" });
     }
 
-    const authResponse = await fetch(
-      `${SUPABASE_URL.replace(/\/$/, "")}/auth/v1/user`,
+    messages.unshift({
+      role: "system",
+      content: "You are ALEX AI, a helpful assistant. Reply naturally in the user's language, especially Egyptian Arabic when appropriate."
+    });
+
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
       {
+        method: "POST",
         headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${token}`
-        }
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-20b",
+          messages,
+          max_completion_tokens: 1024
+        })
       }
     );
 
-    if (!authResponse.ok) {
-      return res.status(401).json({ error: "Invalid login" });
-    }
+    const data = await response.json();
 
-    const { message } = req.body || {};
-
-    if (typeof message !== "string" || !message.trim()) {
-      return res.status(400).json({ error: "Message is required" });
-    }
-
-    if (message.length > 20000) {
-      return res.status(400).json({ error: "Message is too long" });
-    }
-
-    let data;
-    let aiResponse;
-
-    for (let attempt = 0; attempt < 3; attempt++) {
-      aiResponse = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/interactions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": GEMINI_API_KEY
-          },
-          body: JSON.stringify({
-            model: "gemini-3.8-flash",
-            input: message.trim()
-          })
-        }
-      );
-
-      data = await aiResponse.json();
-
-      if (aiResponse.ok) break;
-
-      if (![429, 500, 502, 503, 504].includes(aiResponse.status)) {
-        break;
-      }
-
-      if (attempt < 2) {
-        await new Promise(resolve =>
-          setTimeout(resolve, 1000 * (attempt + 1))
-        );
-      }
-    }
-
-    if (!aiResponse.ok) {
-      console.error("Gemini API Error:", {
-        status: aiResponse.status,
-        error: data.error || data
-      });
-
-      return res.status(503).json({
-        error: "AI is temporarily unavailable. Please try again."
+    if (!response.ok) {
+      console.error("Groq API Error:", data);
+      return res.status(response.status).json({
+        error: data.error?.message || "AI service error"
       });
     }
 
-    const reply =
-      data.output_text ||
-      data.interaction?.output_text ||
-      "";
+    const reply = data.choices?.[0]?.message?.content;
 
-    if (typeof reply !== "string" || !reply.trim()) {
-      return res.status(502).json({
-        error: "AI returned an empty response"
-      });
+    if (!reply) {
+      return res.status(500).json({ error: "No reply received" });
     }
 
-    return res.status(200).json({ reply: reply.trim() });
+    return res.status(200).json({ reply });
 
   } catch (error) {
-    console.error("Chat API Error:", error.message);
-
-    return res.status(500).json({ error: "Server error" });
+    console.error("Chat Error:", error);
+    return res.status(500).json({
+      error: "Something went wrong. Please try again."
+    });
   }
 };
 
