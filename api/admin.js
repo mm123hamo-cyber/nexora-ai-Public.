@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     const adminId = process.env.ADMIN_USER_ID;
 
     if (!url || !anonKey || !secretKey || !adminId) {
-      throw new Error("Missing server environment variables");
+      throw new Error("Missing environment variables");
     }
 
     // Verify the signed-in user
@@ -38,13 +38,12 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    // Load registered users
+    // Get registered users
     const usersResponse = await fetch(
       `${url}/auth/v1/admin/users?page=1&per_page=100`,
       {
         headers: {
-          apikey: secretKey,
-          Authorization: `Bearer ${secretKey}`
+          apikey: secretKey
         }
       }
     );
@@ -55,13 +54,12 @@ export default async function handler(req, res) {
 
     const usersData = await usersResponse.json();
 
-    // Load stored messages
+    // Get saved messages
     const messagesResponse = await fetch(
       `${url}/rest/v1/alex_messages?select=id,user_id,chat_id,role,content,created_at&order=created_at.desc&limit=500`,
       {
         headers: {
-          apikey: secretKey,
-          Authorization: `Bearer ${secretKey}`
+          apikey: secretKey
         }
       }
     );
@@ -83,6 +81,8 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error("Admin API error:", error.message);
-    return res.status(500).json({ error: "Admin server error" });
+    return res.status(500).json({
+      error: "Admin server error"
+    });
   }
 }
