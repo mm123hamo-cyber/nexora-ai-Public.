@@ -1,0 +1,253 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALEX AI - Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#080808;
+  color:white;
+  font-family:Arial,sans-serif;
+}
+header{
+  padding:18px;
+  background:#111;
+  border-bottom:1px solid #292929;
+  text-align:center;
+}
+h2{margin:0;color:#fff}
+main{max-width:1000px;margin:auto;padding:18px}
+#status{
+  background:#151515;
+  padding:14px;
+  border-radius:10px;
+  margin-bottom:15px;
+  color:#ccc;
+}
+#users{
+  display:grid;
+  gap:10px;
+}
+.user{
+  background:#171717;
+  border:1px solid #333;
+  padding:14px;
+  border-radius:10px;
+  cursor:pointer;
+  text-align:right;
+  color:white;
+  width:100%;
+}
+.user:hover,.user.active{border-color:#888;background:#222}
+#messages{
+  margin-top:18px;
+  display:grid;
+  gap:10px;
+}
+.message{
+  background:#171717;
+  border:1px solid #333;
+  padding:13px;
+  border-radius:10px;
+  overflow-wrap:anywhere;
+}
+.message.user-message{border-right:4px solid #5b9cff}
+.message.ai-message{border-right:4px solid #42c98a}
+.meta{font-size:12px;color:#999;margin-bottom:8px}
+.content{white-space:pre-wrap;line-height:1.6}
+button{
+  background:#292929;
+  color:white;
+  border:1px solid #444;
+  padding:10px 15px;
+  border-radius:8px;
+  cursor:pointer;
+}
+button:hover{background:#383838}
+h3{margin-top:25px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>ALEX AI - لوحة الأدمن</h2>
+</header>
+
+<main>
+  <div id="status">جاري التحقق من تسجيل الدخول...</div>
+
+  <button id="reloadBtn">تحديث البيانات</button>
+
+  <h3>المستخدمون الموافقون على مراجعة المحادثات</h3>
+  <div id="users"></div>
+
+  <h3 id="messagesTitle">المحادثات</h3>
+  <div id="messages">اختار مستخدم لعرض محادثاته.</div>
+</main>
+
+<script>
+const SUPABASE_URL =
+  "https://hbfdrtgmalvlixwuujgf.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_vBz40TiOn08eysk3uiQhYQ_LLv_QphJ";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const statusBox = document.getElementById("status");
+const usersBox = document.getElementById("users");
+const messagesBox = document.getElementById("messages");
+const messagesTitle = document.getElementById("messagesTitle");
+
+let allMessages = [];
+let selectedUser = null;
+
+function showStatus(message){
+  statusBox.textContent = message;
+}
+
+async function loadAdminData(){
+  showStatus("جاري تحميل البيانات...");
+  usersBox.replaceChildren();
+  messagesBox.textContent = "جاري التحميل...";
+
+  try {
+    const { data, error } = await supabase.auth.getSession();
+
+    if(error) throw error;
+
+    const session = data.session;
+
+    if(!session){
+      showStatus("سجّل دخولك من الموقع الرئيسي أولاً، ثم افتح لوحة الأدمن.");
+      messagesBox.textContent = "";
+      return;
+    }
+
+    const response = await fetch("/api/admin", {
+      method:"GET",
+      headers:{
+        Authorization:"Bearer " + session.access_token
+      }
+    });
+
+    const result = await response.json();
+
+    if(!response.ok){
+      if(response.status === 403){
+        throw new Error("الحساب الحالي ليس حساب الأدمن.");
+      }
+      if(response.status === 401){
+        throw new Error("الجلسة غير صالحة. سجّل دخولك من جديد.");
+      }
+      throw new Error(result.error || "حدث خطأ أثناء تحميل البيانات.");
+    }
+
+    allMessages = result.messages || [];
+    selectedUser = null;
+
+    if(!result.users || result.users.length === 0){
+      showStatus("لا يوجد مستخدمون وافقوا على مراجعة المحادثات حتى الآن.");
+      usersBox.textContent = "لا يوجد مستخدمون لعرضهم.";
+      messagesBox.textContent = "";
+      return;
+    }
+
+    showStatus("تم تحميل " + result.users.length + " مستخدم موافق.");
+
+    result.users.forEach(user => {
+      const button = document.createElement("button");
+      button.className = "user";
+
+      const email = document.createElement("strong");
+      email.textContent = user.email || "بدون بريد إلكتروني";
+
+      const date = document.createElement("div");
+      date.className = "meta";
+      date.textContent = user.created_at
+        ? new Date(user.created_at).toLocaleString("ar-EG")
+        : "";
+
+      button.append(email, date);
+
+      button.addEventListener("click", () => {
+        selectedUser = user.id;
+
+        document.querySelectorAll(".user").forEach(item => {
+          item.classList.remove("active");
+        });
+
+        button.classList.add("active");
+        showUserMessages(user);
+      });
+
+      usersBox.appendChild(button);
+    });
+
+    messagesBox.textContent = "اختار مستخدم لعرض محادثاته.";
+
+  } catch(error){
+    showStatus(error.message);
+    usersBox.textContent = "";
+    messagesBox.textContent = "";
+  }
+}
+
+function showUserMessages(user){
+  messagesBox.replaceChildren();
+
+  const userMessages = allMessages.filter(
+    message => message.user_id === user.id
+  );
+
+  messagesTitle.textContent =
+    "محادثات: " + (user.email || "المستخدم");
+
+  if(userMessages.length === 0){
+    messagesBox.textContent = "لا توجد رسائل محفوظة لهذا المستخدم.";
+    return;
+  }
+
+  userMessages.forEach(message => {
+    const card = document.createElement("div");
+    card.className = "message " +
+      (message.role === "user" ? "user-message" : "ai-message");
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+
+    const role = message.role === "user" ? "المستخدم" : "ALEX AI";
+    const date = message.created_at
+      ? new Date(message.created_at).toLocaleString("ar-EG")
+      : "";
+
+    meta.textContent = role + " | " + date +
+      " | المحادثة: " + message.chat_id;
+
+    const content = document.createElement("div");
+    content.className = "content";
+    content.textContent = message.content || "";
+
+    card.append(meta, content);
+    messagesBox.appendChild(card);
+  });
+}
+
+document.getElementById("reloadBtn")
+  .addEventListener("click", loadAdminData);
+
+loadAdminData();
+</script>
+
+</body>
+</html>
