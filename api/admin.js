@@ -1,0 +1,88 @@
+
+export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const url = process.env.SUPABASE_URL;
+    const anonKey = process.env.SUPABASE_ANON_KEY;
+    const secretKey = process.env.SUPABASE_SECRET_KEY;
+    const adminId = process.env.ADMIN_USER_ID;
+
+    if (!url || !anonKey || !secretKey || !adminId) {
+      throw new Error("Missing server environment variables");
+    }
+
+    // Verify the signed-in user
+    const authResponse = await fetch(`${url}/auth/v1/user`, {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!authResponse.ok) {
+      return res.status(401).json({ error: "Invalid session" });
+    }
+
+    const user = await authResponse.json();
+
+    if (user.id !== adminId) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    // Load registered users
+    const usersResponse = await fetch(
+      `${url}/auth/v1/admin/users?page=1&per_page=100`,
+      {
+        headers: {
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`
+        }
+      }
+    );
+
+    if (!usersResponse.ok) {
+      throw new Error("Could not load users");
+    }
+
+    const usersData = await usersResponse.json();
+
+    // Load stored messages
+    const messagesResponse = await fetch(
+      `${url}/rest/v1/alex_messages?select=id,user_id,chat_id,role,content,created_at&order=created_at.desc&limit=500`,
+      {
+        headers: {
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`
+        }
+      }
+    );
+
+    if (!messagesResponse.ok) {
+      throw new Error("Could not load messages");
+    }
+
+    const messages = await messagesResponse.json();
+
+    return res.status(200).json({
+      users: (usersData.users || []).map(u => ({
+        id: u.id,
+        email: u.email,
+        created_at: u.created_at
+      })),
+      messages
+    });
+
+  } catch (error) {
+    console.error("Admin API error:", error.message);
+    return res.status(500).json({ error: "Admin server error" });
+  }
+}
