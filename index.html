@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -20,6 +21,7 @@ h1 span{color:#aaa}
 p{text-align:center;color:#aaa}
 .panel{background:#151515;border:1px solid #303030;border-radius:16px;padding:15px;margin:12px 0}
 input{width:100%;padding:14px;margin:7px 0;background:#090909;color:white;border:1px solid #444;border-radius:10px;font-size:15px}
+
 #workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:12px;align-items:start}
 #sidebar{height:calc(100vh - 100px);position:sticky;top:10px;display:flex;flex-direction:column;overflow:hidden}
 .sidebar-head{display:flex;justify-content:space-between;align-items:center}
@@ -33,6 +35,7 @@ input{width:100%;padding:14px;margin:7px 0;background:#090909;color:white;border
 .user{background:#303030}
 .bot{background:#151515;border:1px solid #333}
 .msg img{display:block;max-width:min(100%,320px);max-height:300px;object-fit:contain;border-radius:12px;margin-top:8px}
+
 form#chatForm{display:flex;gap:7px;align-items:center;background:#151515;padding:8px;border:1px solid #444;border-radius:15px}
 #message{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;margin:0}
 #sendBtn{margin:0}
@@ -46,6 +49,17 @@ form#chatForm{display:flex;gap:7px;align-items:center;background:#151515;padding
 #editPrompt{margin:5px 0}
 #editMessage{font-size:13px;text-align:right;margin:7px 0}
 #editImageBtn{width:100%;margin:4px 0;background:#fff;color:#000}
+
+#accountPage{max-width:750px;margin:20px auto;min-height:350px}
+.account-title{font-size:25px;margin:5px 0 20px}
+.account-row{background:#222;border:1px solid #393939;border-radius:13px;padding:16px;margin:12px 0}
+.account-label{color:#aaa;font-size:13px;margin-bottom:9px}
+.account-email{font-size:17px;overflow-wrap:anywhere;direction:ltr;text-align:right}
+.account-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.account-actions button{margin:0}
+#accountBtn{width:100%;text-align:right;background:#252525;color:white;margin:5px 0}
+#backToChatBtn{margin-bottom:15px}
+
 #cameraModal{position:fixed;inset:0;background:#000e;z-index:50;display:flex;align-items:center;justify-content:center;padding:15px}
 #cameraPanel{width:100%;max-width:500px;background:#171717;border:1px solid #444;border-radius:16px;padding:12px}
 #cameraVideo{width:100%;max-height:60vh;background:#000;border-radius:12px;object-fit:contain}
@@ -65,6 +79,8 @@ body.light-mode #attachMenu{background:white;border-color:#ccc}
 body.light-mode #attachMenu button{background:#eee;color:#111}
 body.light-mode #previewBox,body.light-mode #editBox{background:#eee}
 body.light-mode #cameraPanel{background:white;color:#111}
+body.light-mode .account-row{background:#f0f0f0;border-color:#ddd}
+body.light-mode #accountBtn{background:#eee;color:#111}
 
 @media(max-width:700px){
 main{padding:10px}
@@ -75,6 +91,7 @@ body.sidebar-open #sidebar{transform:translateX(0)}
 body.sidebar-open #sidebarBackdrop{display:block}
 #chat{height:calc(100dvh - 230px);min-height:250px}
 h1{font-size:27px}
+#accountPage{margin:10px auto}
 }
 #sidebarBackdrop{display:none}
 body.sidebar-closed #workspace{grid-template-columns:minmax(0,1fr)}
@@ -83,12 +100,14 @@ body.sidebar-closed #sidebar{display:none}
 </head>
 
 <body>
+
 <header>
 <span>◈ ALEX AI</span>
 <button id="themeBtn" class="secondary">الوضع الأبيض</button>
 </header>
 
 <main>
+
 <h1>أهلاً بك في <span>ALEX AI</span></h1>
 <p>مساعدك الذكي في كل شيء</p>
 
@@ -113,25 +132,28 @@ body.sidebar-closed #sidebar{display:none}
 </section>
 
 <section id="app" class="hidden">
-<div class="panel">
-<span id="userEmail"></span>
-<button id="revokeConsentBtn" class="secondary">إلغاء الموافقة</button>
-<button id="logoutBtn" class="secondary">خروج</button>
-</div>
 
 <div id="workspace">
+
 <aside id="sidebar" class="panel">
+
 <div class="sidebar-head">
 <h3>محادثاتي</h3>
 <button id="closeSidebarBtn" class="secondary">✕</button>
 </div>
+
 <button id="newChatBtn">＋ شات جديد</button>
+
+<button id="accountBtn">👤 حسابي</button>
+
 <div id="chatList"></div>
+
 </aside>
 
 <div id="sidebarBackdrop"></div>
 
 <div id="chatArea">
+
 <div class="chat-toolbar">
 <button id="menuBtn" class="secondary">☰</button>
 <strong>ALEX AI</strong>
@@ -140,6 +162,7 @@ body.sidebar-closed #sidebar{display:none}
 <div id="chat" class="panel"></div>
 
 <div id="composer">
+
 <div id="previewBox" class="hidden">
 <img id="previewImage" alt="معاينة الصورة">
 <span>الصورة جاهزة</span>
@@ -165,15 +188,43 @@ body.sidebar-closed #sidebar{display:none}
 </form>
 
 <input id="imageInput" type="file" accept="image/*" class="hidden">
+
 </div>
 </div>
 </div>
 
+<!-- صفحة الحساب المستقلة -->
+
+<section id="accountPage" class="panel hidden">
+
+<button id="backToChatBtn" class="secondary">← الرجوع إلى المحادثات</button>
+
+<h2 class="account-title">👤 حسابي</h2>
+
+<div class="account-row">
+<div class="account-label">البريد الإلكتروني</div>
+<div id="userEmail" class="account-email"></div>
+</div>
+
+<div class="account-row">
+<div class="account-label">حالة الحساب</div>
+<strong>الحساب نشط</strong>
+</div>
+
+<div class="account-actions">
+<button id="revokeConsentBtn" class="secondary">إلغاء الموافقة</button>
+<button id="logoutBtn" class="secondary">تسجيل الخروج</button>
+</div>
+
+</section>
+
 <small>نسخة تجريبية من ALEX AI</small>
+
 </section>
 </main>
 
-<!-- نافذة الكاميرا داخل الصفحة -->
+<!-- نافذة الكاميرا -->
+
 <div id="cameraModal" class="hidden">
 <div id="cameraPanel">
 <h3>الكاميرا</h3>
@@ -188,8 +239,9 @@ body.sidebar-closed #sidebar{display:none}
 </div>
 
 <script>
+
 const SUPABASE_URL="https://hbfdrtgmalvlixwuujgf.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_vBz40TiOn08eysk3uiQhYQ_lLv_QphJ";
+const SUPABASE_ANON_KEY="sb_publishable_vBz40TiOn08eysk3uiHqYQ_lLv_QphJ";
 
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const $=id=>document.getElementById(id);
@@ -221,6 +273,7 @@ return currentUser?.user_metadata?.chat_review_consent===true;
 
 function saveChats(){
 if(!currentUser)return;
+
 try{
 localStorage.setItem(storageKey(),JSON.stringify(chats));
 }catch(error){
@@ -235,12 +288,14 @@ chat_id:chat.id,
 role:role,
 content:content||""
 });
+
 if(error)throw error;
 }
 
 function renderChat(){
 const chat=activeChat();
 $("chat").replaceChildren();
+
 if(!chat)return;
 
 chat.messages.forEach(item=>{
@@ -257,6 +312,7 @@ img.src=item.image;
 img.alt="صورة مرسلة";
 div.appendChild(img);
 }
+
 $("chat").appendChild(div);
 });
 
@@ -268,14 +324,17 @@ $("chatList").replaceChildren();
 
 chats.slice().reverse().forEach(chat=>{
 const btn=document.createElement("button");
+
 btn.className="chat-item"+(chat.id===activeChatId?" active":"");
 
 const first=chat.messages.find(m=>m.role==="user");
+
 btn.textContent=chat.title||(first?first.text.slice(0,25):"محادثة جديدة");
 btn.disabled=sending||editing;
 
 btn.onclick=()=>{
 if(sending||editing)return;
+
 activeChatId=chat.id;
 renderChat();
 renderChatList();
@@ -284,6 +343,7 @@ closeSidebar();
 
 $("chatList").appendChild(btn);
 });
+
 }
 
 function saveAndRender(){
@@ -303,8 +363,10 @@ messages:[]
 
 chats.push(chat);
 activeChatId=chat.id;
+
 saveAndRender();
 closeSidebar();
+showChatPage();
 }
 
 function loadChats(){
@@ -335,8 +397,29 @@ function openSidebar(){
 document.body.classList.add("sidebar-open");
 }
 
+/* التنقل بين الصفحات */
+
+function showAccountPage(){
+$("workspace").classList.add("hidden");
+$("accountPage").classList.remove("hidden");
+$("userEmail").textContent=currentUser?.email||"";
+closeSidebar();
+window.scrollTo(0,0);
+}
+
+function showChatPage(){
+$("accountPage").classList.add("hidden");
+$("workspace").classList.remove("hidden");
+closeSidebar();
+}
+
+$("accountBtn").onclick=showAccountPage;
+$("backToChatBtn").onclick=showChatPage;
+
 function updateSession(session){
+
 currentUser=session?.user||null;
+
 const accepted=hasConsent();
 
 $("auth").classList.toggle("hidden",!!currentUser);
@@ -344,30 +427,45 @@ $("consent").classList.toggle("hidden",!currentUser||accepted);
 $("app").classList.toggle("hidden",!currentUser||!accepted);
 
 if(currentUser){
-$("userEmail").textContent="الحساب: "+currentUser.email;
+
+$("userEmail").textContent=currentUser.email||"";
 
 if(accepted){
 loadChats();
+showChatPage();
 }else{
 chats=[];
 activeChatId=null;
 $("chat").replaceChildren();
 $("chatList").replaceChildren();
+$("workspace").classList.remove("hidden");
+$("accountPage").classList.add("hidden");
 }
+
 }else{
+
 chats=[];
 activeChatId=null;
+
 $("chat").replaceChildren();
 $("chatList").replaceChildren();
+
+$("workspace").classList.remove("hidden");
+$("accountPage").classList.add("hidden");
+
 closeSidebar();
 }
 }
 
+/* الموافقة على الخصوصية */
+
 $("yesConsent").onclick=async()=>{
+
 $("yesConsent").disabled=true;
 showMessage("consentMessage","جاري حفظ موافقتك...");
 
 try{
+
 const {data,error}=await db.auth.updateUser({
 data:{
 chat_review_consent:true,
@@ -376,12 +474,17 @@ chat_review_consent_at:new Date().toISOString()
 });
 
 if(error)throw error;
+
 updateSession({user:data.user});
 
 }catch(error){
+
 showMessage("consentMessage","تعذر حفظ الموافقة: "+error.message);
+
 }finally{
+
 $("yesConsent").disabled=false;
+
 }
 };
 
@@ -390,14 +493,17 @@ showMessage("consentMessage","لم توافق، لذلك لن تتمكن من ا
 };
 
 $("revokeConsentBtn").onclick=async()=>{
+
 if(!currentUser)return;
 
 const confirmed=confirm("هل تريد إلغاء موافقتك؟ لن تتمكن من استخدام الشات بعد ذلك.");
+
 if(!confirmed)return;
 
 $("revokeConsentBtn").disabled=true;
 
 try{
+
 const {data,error}=await db.auth.updateUser({
 data:{
 chat_review_consent:false,
@@ -406,16 +512,24 @@ chat_review_consent_revoked_at:new Date().toISOString()
 });
 
 if(error)throw error;
+
 updateSession({user:data.user});
 
 }catch(error){
+
 alert("تعذر إلغاء الموافقة: "+error.message);
+
 }finally{
+
 $("revokeConsentBtn").disabled=false;
+
 }
 };
 
+/* تسجيل الدخول */
+
 $("loginBtn").onclick=async()=>{
+
 const email=$("email").value.trim();
 const password=$("password").value;
 
@@ -427,17 +541,30 @@ $("loginBtn").disabled=true;
 showMessage("authMessage","جاري تسجيل الدخول...");
 
 try{
-const {data,error}=await db.auth.signInWithPassword({email,password});
+
+const {data,error}=await db.auth.signInWithPassword({
+email,password
+});
+
 if(error)throw error;
+
 updateSession(data.session);
+
 }catch(error){
+
 showMessage("authMessage",error.message);
+
 }finally{
+
 $("loginBtn").disabled=false;
+
 }
 };
 
+/* إنشاء حساب */
+
 $("signupBtn").onclick=async()=>{
+
 const email=$("email").value.trim();
 const password=$("password").value;
 
@@ -452,7 +579,11 @@ return showMessage("authMessage","كلمة المرور 6 أحرف على الأ
 $("signupBtn").disabled=true;
 
 try{
-const {data,error}=await db.auth.signUp({email,password});
+
+const {data,error}=await db.auth.signUp({
+email,password
+});
+
 if(error)throw error;
 
 if(data.session){
@@ -460,18 +591,31 @@ updateSession(data.session);
 }else{
 showMessage("authMessage","راجع بريدك لتأكيد الحساب");
 }
+
 }catch(error){
+
 showMessage("authMessage",error.message);
+
 }finally{
+
 $("signupBtn").disabled=false;
+
 }
 };
 
+/* تسجيل الخروج */
+
 $("logoutBtn").onclick=async()=>{
+
 stopCamera();
+
 const {error}=await db.auth.signOut();
+
 if(error)alert(error.message);
+
 };
+
+/* القائمة الجانبية */
 
 $("menuBtn").onclick=()=>{
 document.body.classList.contains("sidebar-open")?closeSidebar():openSidebar();
@@ -481,34 +625,45 @@ $("closeSidebarBtn").onclick=closeSidebar;
 $("sidebarBackdrop").onclick=closeSidebar;
 $("newChatBtn").onclick=createNewChat;
 
+/* الصور */
+
 function showPreview(dataUrl){
+
 selectedImage=dataUrl;
+
 $("previewImage").src=dataUrl;
 $("previewBox").classList.remove("hidden");
 $("editBox").classList.remove("hidden");
 $("attachMenu").classList.add("hidden");
+
 showMessage("editMessage","");
 }
 
 function clearSelectedImage(){
+
 selectedImage=null;
+
 $("previewImage").removeAttribute("src");
 $("previewBox").classList.add("hidden");
 $("editBox").classList.add("hidden");
 $("editPrompt").value="";
 $("editMessage").textContent="";
 $("imageInput").value="";
+
 }
 
 async function compressImage(file){
+
 if(!file.type.startsWith("image/")){
 throw new Error("اختار صورة صحيحة");
 }
 
 const source=await createImageBitmap(file);
+
 const scale=Math.min(1,1280/Math.max(source.width,source.height));
 
 const canvas=document.createElement("canvas");
+
 canvas.width=Math.round(source.width*scale);
 canvas.height=Math.round(source.height*scale);
 
@@ -517,7 +672,9 @@ source,0,0,canvas.width,canvas.height
 );
 
 source.close();
+
 return canvas.toDataURL("image/jpeg",0.72);
+
 }
 
 $("attachBtn").onclick=()=>{
@@ -530,29 +687,42 @@ $("imageInput").click();
 };
 
 $("imageInput").onchange=async()=>{
+
 const file=$("imageInput").files?.[0];
+
 if(!file)return;
 
 try{
+
 showPreview(await compressImage(file));
+
 }catch(error){
+
 alert(error.message);
+
 }
 };
 
 $("removeImageBtn").onclick=clearSelectedImage;
 
+/* تعديل الصور */
+
 $("editImageBtn").onclick=async()=>{
+
 if(editing||!selectedImage)return;
 
 const prompt=$("editPrompt").value.trim();
+
 if(!prompt)return showMessage("editMessage","اكتب وصف التعديل");
 
 editing=true;
+
 $("editImageBtn").disabled=true;
+
 showMessage("editMessage","جاري التعديل...");
 
 try{
+
 const {data}=await db.auth.getSession();
 const token=data.session?.access_token;
 
@@ -581,18 +751,27 @@ throw new Error("لم يتم إنشاء صورة");
 }
 
 showPreview(result.image);
+
 $("editPrompt").value="";
+
 showMessage("editMessage","تم تعديل الصورة");
 
 }catch(error){
+
 showMessage("editMessage","تعذر التعديل: "+error.message);
+
 }finally{
+
 editing=false;
 $("editImageBtn").disabled=false;
+
 }
 };
 
+/* الكاميرا */
+
 async function openCamera(){
+
 $("attachMenu").classList.add("hidden");
 
 if(!navigator.mediaDevices?.getUserMedia){
@@ -602,6 +781,7 @@ return showMessage("cameraMessage","المتصفح لا يدعم فتح الكا
 $("cameraModal").classList.remove("hidden");
 
 try{
+
 cameraStream=await navigator.mediaDevices.getUserMedia({
 video:{facingMode:{ideal:"environment"}},
 audio:false
@@ -613,34 +793,44 @@ const track=cameraStream.getVideoTracks()[0];
 const caps=track.getCapabilities?.();
 
 $("flashBtn").classList.toggle("hidden",!caps?.torch);
+
 showMessage("cameraMessage","الكاميرا جاهزة");
 
 }catch(error){
+
 showMessage("cameraMessage","تعذر فتح الكاميرا أو لم يتم السماح بها");
+
 }
 }
 
 function stopCamera(){
+
 if(cameraStream){
 cameraStream.getTracks().forEach(track=>track.stop());
 }
 
 cameraStream=null;
 torchOn=false;
+
 $("cameraVideo").srcObject=null;
 $("cameraModal").classList.add("hidden");
 $("flashBtn").textContent="⚡ تشغيل الفلاش";
+
 }
 
 $("cameraBtn").onclick=openCamera;
 $("closeCameraBtn").onclick=stopCamera;
 
 $("flashBtn").onclick=async()=>{
+
 const track=cameraStream?.getVideoTracks()[0];
+
 if(!track)return;
 
 try{
+
 torchOn=!torchOn;
+
 await track.applyConstraints({
 advanced:[{torch:torchOn}]
 });
@@ -648,12 +838,16 @@ advanced:[{torch:torchOn}]
 $("flashBtn").textContent=torchOn?"⚡ إيقاف الفلاش":"⚡ تشغيل الفلاش";
 
 }catch{
+
 torchOn=false;
+
 showMessage("cameraMessage","الفلاش غير مدعوم");
+
 }
 };
 
 $("captureBtn").onclick=()=>{
+
 const video=$("cameraVideo");
 
 if(!video.videoWidth){
@@ -661,6 +855,7 @@ return showMessage("cameraMessage","استنى الكاميرا تشتغل");
 }
 
 const canvas=document.createElement("canvas");
+
 const scale=Math.min(1,1280/Math.max(video.videoWidth,video.videoHeight));
 
 canvas.width=Math.round(video.videoWidth*scale);
@@ -671,10 +866,15 @@ video,0,0,canvas.width,canvas.height
 );
 
 showPreview(canvas.toDataURL("image/jpeg",0.72));
+
 stopCamera();
+
 };
 
+/* إرسال الرسائل */
+
 $("chatForm").onsubmit=async e=>{
+
 e.preventDefault();
 
 if(sending||editing||!currentUser||!hasConsent())return;
@@ -685,10 +885,13 @@ const image=selectedImage;
 if(!message&&!image)return;
 
 const chat=activeChat();
+
 if(!chat)return;
 
 sending=true;
+
 $("message").value="";
+
 clearSelectedImage();
 
 const userItem={
@@ -709,6 +912,7 @@ text:"جاري التفكير..."
 };
 
 chat.messages.push(replyItem);
+
 saveAndRender();
 
 $("sendBtn").disabled=true;
@@ -716,6 +920,7 @@ $("attachBtn").disabled=true;
 $("newChatBtn").disabled=true;
 
 try{
+
 await saveMessageToDatabase(
 chat,
 "user",
@@ -723,17 +928,21 @@ message||(image?"[صورة مرفقة]":"")
 );
 
 const {data,error}=await db.auth.getSession();
+
 if(error)throw error;
 
 const token=data.session?.access_token;
+
 if(!token)throw new Error("سجل دخولك مرة تانية");
 
 const recent=chat.messages.slice(0,-1).slice(-4);
 
 const history=recent.map((item,index)=>{
+
 const last=index===recent.length-1;
 
 if(item.role==="user"&&last&&image){
+
 const parts=[];
 
 if(item.text){
@@ -752,12 +961,14 @@ return {
 role:"user",
 content:parts
 };
+
 }
 
 return {
 role:item.role,
 content:(item.text||"").slice(0,1500)
 };
+
 });
 
 const response=await fetch("/api/chat",{
@@ -777,64 +988,95 @@ throw new Error(result.error||"حصل خطأ في خدمة الذكاء الاص
 
 replyItem.text=result.reply||"مفيش رد متاح";
 
-// نعرض رد الذكاء الاصطناعي حتى لو فشل حفظه في قاعدة البيانات
 saveChats();
 renderChat();
 
 try{
+
 await saveMessageToDatabase(chat,"assistant",replyItem.text);
+
 }catch(saveError){
+
 console.error("تعذر حفظ رد المساعد:",saveError);
+
 replyItem.text+="\n\nتنبيه: الرد ظهر لك، لكن تعذر حفظه في سجل المحادثات.";
+
 }
 
 }catch(error){
+
 replyItem.text="حصل خطأ: "+error.message;
+
 }finally{
+
 saveChats();
 renderChat();
 renderChatList();
 
 sending=false;
+
 $("sendBtn").disabled=false;
 $("attachBtn").disabled=false;
 $("newChatBtn").disabled=false;
+
 $("message").focus();
+
 }
 };
 
+/* الوضع الأبيض والأسود */
+
 $("themeBtn").onclick=()=>{
+
 const light=document.body.classList.toggle("light-mode");
 
 try{
+
 localStorage.setItem("alex-theme",light?"light":"dark");
+
 }catch(error){
+
 console.error(error);
+
 }
 
 $("themeBtn").textContent=light?"الوضع الأسود":"الوضع الأبيض";
+
 };
 
 try{
+
 if(localStorage.getItem("alex-theme")==="light"){
+
 document.body.classList.add("light-mode");
+
 $("themeBtn").textContent="الوضع الأسود";
+
 }
+
 }catch(error){
+
 console.error(error);
+
 }
+
+/* متابعة جلسة المستخدم */
 
 db.auth.onAuthStateChange((_event,session)=>{
 updateSession(session);
 });
 
 db.auth.getSession().then(({data,error})=>{
+
 if(error){
 console.error(error);
 return;
 }
+
 updateSession(data.session);
+
 });
+
 </script>
 </body>
 </html>
