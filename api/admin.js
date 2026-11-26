@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       throw new Error("Missing environment variables");
     }
 
-    // Verify the signed-in user
+    // Verify the logged-in user
     const authResponse = await fetch(`${url}/auth/v1/user`, {
       headers: {
         apikey: anonKey,
@@ -38,12 +38,13 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    // Get registered users
+    // Load registered users
     const usersResponse = await fetch(
       `${url}/auth/v1/admin/users?page=1&per_page=100`,
       {
         headers: {
-          apikey: secretKey
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`
         }
       }
     );
@@ -54,24 +55,42 @@ export default async function handler(req, res) {
 
     const usersData = await usersResponse.json();
 
-    // Get saved messages
-    const messagesResponse = await fetch(
-      `${url}/rest/v1/alex_messages?select=id,user_id,chat_id,role,content,created_at&order=created_at.desc&limit=500`,
-      {
-        headers: {
-          apikey: secretKey
-        }
-      }
+    // Only users who agreed to chat review
+    const consentingUsers = (usersData.users || []).filter(
+      u => u.user_metadata?.chat_review_consent === true
     );
 
-    if (!messagesResponse.ok) {
-      throw new Error("Could not load messages");
+    let messages = [];
+
+    if (consentingUsers.length > 0) {
+      const ids = consentingUsers.map(u => u.id);
+
+      const params = new URLSearchParams({
+        select: "id,user_id,chat_id,role,content,created_at",
+        user_id: `in.(${ids.join(",")})`,
+        order: "created_at.desc",
+        limit: "500"
+      });
+
+      const messagesResponse = await fetch(
+        `${url}/rest/v1/alex_messages?${params.toString()}`,
+        {
+          headers: {
+            apikey: secretKey,
+            Authorization: `Bearer ${secretKey}`
+          }
+        }
+      );
+
+      if (!messagesResponse.ok) {
+        throw new Error("Could not load messages");
+      }
+
+      messages = await messagesResponse.json();
     }
 
-    const messages = await messagesResponse.json();
-
     return res.status(200).json({
-      users: (usersData.users || []).map(u => ({
+      users: consentingUsers.map(u => ({
         id: u.id,
         email: u.email,
         created_at: u.created_at
