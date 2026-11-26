@@ -10,7 +10,7 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#080808;color:white;font-family:Arial,sans-serif}
-header{height:65px;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #292929;font-size:23px;font-weight:bold}
+header{min-height:65px;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #292929;font-size:23px;font-weight:bold;gap:8px}
 button{background:white;color:black;border:0;border-radius:10px;padding:11px 15px;cursor:pointer;font-weight:bold;margin:3px}
 button:disabled{opacity:.5;cursor:not-allowed}
 .secondary{background:#303030;color:white}
@@ -29,11 +29,11 @@ input{width:100%;padding:14px;margin:7px 0;background:#090909;color:white;border
 .chat-item{width:100%;text-align:right;background:#252525;color:#ddd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;flex-shrink:0}
 .chat-item.active{background:#555;color:white}
 #chatArea{min-width:0}
-.chat-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-#chat{height:calc(100vh - 230px);min-height:300px;overflow:auto;padding:10px}
-.msg{padding:14px;margin:10px 0;border-radius:14px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
-.user{background:#303030}
-.bot{background:#151515;border:1px solid #333}
+.chat-toolbar{display:flex;align-items:center;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+#chat{height:calc(100vh - 230px);min-height:300px;overflow:auto;padding:10px;background-color:#151515;background-position:center;background-repeat:no-repeat;background-size:cover}
+.msg{padding:14px;margin:10px 0;border-radius:14px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.user{background:rgba(48,48,48,.93)}
+.bot{background:rgba(21,21,21,.93);border:1px solid #555}
 .msg img{display:block;max-width:min(100%,320px);max-height:300px;object-fit:contain;border-radius:12px;margin-top:8px}
 
 form#chatForm{display:flex;gap:7px;align-items:center;background:#151515;padding:8px;border:1px solid #444;border-radius:15px}
@@ -70,7 +70,8 @@ body.light-mode{background:#f5f5f5;color:#111}
 body.light-mode header{border-color:#ddd}
 body.light-mode .panel,body.light-mode .bot,body.light-mode form#chatForm{background:white;color:#111;border-color:#ddd}
 body.light-mode input{background:white;color:#111;border-color:#ccc}
-body.light-mode .user{background:#e5e5e5}
+body.light-mode .user{background:rgba(229,229,229,.94)}
+body.light-mode .bot{background:rgba(255,255,255,.94);border-color:#ddd}
 body.light-mode .secondary{background:#ddd;color:#111}
 body.light-mode p{color:#555}
 body.light-mode .chat-item{background:#e5e5e5;color:#111}
@@ -92,7 +93,9 @@ body.sidebar-open #sidebarBackdrop{display:block}
 #chat{height:calc(100dvh - 230px);min-height:250px}
 h1{font-size:27px}
 #accountPage{margin:10px auto}
+.chat-toolbar button{padding:9px;font-size:12px}
 }
+
 #sidebarBackdrop{display:none}
 body.sidebar-closed #workspace{grid-template-columns:minmax(0,1fr)}
 body.sidebar-closed #sidebar{display:none}
@@ -136,18 +139,14 @@ body.sidebar-closed #sidebar{display:none}
 <div id="workspace">
 
 <aside id="sidebar" class="panel">
-
 <div class="sidebar-head">
 <h3>محادثاتي</h3>
 <button id="closeSidebarBtn" class="secondary">✕</button>
 </div>
 
 <button id="newChatBtn">＋ شات جديد</button>
-
 <button id="accountBtn">👤 حسابي</button>
-
 <div id="chatList"></div>
-
 </aside>
 
 <div id="sidebarBackdrop"></div>
@@ -157,6 +156,9 @@ body.sidebar-closed #sidebar{display:none}
 <div class="chat-toolbar">
 <button id="menuBtn" class="secondary">☰</button>
 <strong>ALEX AI</strong>
+<button id="chatBgBtn" class="secondary">🖼️ خلفية الشات</button>
+<button id="resetChatBgBtn" class="secondary">↩️ إزالة الخلفية</button>
+<input id="chatBgInput" type="file" accept="image/*" class="hidden">
 </div>
 
 <div id="chat" class="panel"></div>
@@ -188,17 +190,12 @@ body.sidebar-closed #sidebar{display:none}
 </form>
 
 <input id="imageInput" type="file" accept="image/*" class="hidden">
-
 </div>
 </div>
 </div>
-
-<!-- صفحة الحساب المستقلة -->
 
 <section id="accountPage" class="panel hidden">
-
 <button id="backToChatBtn" class="secondary">← الرجوع إلى المحادثات</button>
-
 <h2 class="account-title">👤 حسابي</h2>
 
 <div class="account-row">
@@ -215,15 +212,11 @@ body.sidebar-closed #sidebar{display:none}
 <button id="revokeConsentBtn" class="secondary">إلغاء الموافقة</button>
 <button id="logoutBtn" class="secondary">تسجيل الخروج</button>
 </div>
-
 </section>
 
 <small>نسخة تجريبية من ALEX AI</small>
-
 </section>
 </main>
-
-<!-- نافذة الكاميرا -->
 
 <div id="cameraModal" class="hidden">
 <div id="cameraPanel">
@@ -239,7 +232,6 @@ body.sidebar-closed #sidebar{display:none}
 </div>
 
 <script>
-
 const SUPABASE_URL="https://hbfdrtgmalvlixwuujgf.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_vBz40TiOn08eysk3uiHqYQ_lLv_QphJ";
 
@@ -273,7 +265,6 @@ return currentUser?.user_metadata?.chat_review_consent===true;
 
 function saveChats(){
 if(!currentUser)return;
-
 try{
 localStorage.setItem(storageKey(),JSON.stringify(chats));
 }catch(error){
@@ -288,14 +279,12 @@ chat_id:chat.id,
 role:role,
 content:content||""
 });
-
 if(error)throw error;
 }
 
 function renderChat(){
 const chat=activeChat();
 $("chat").replaceChildren();
-
 if(!chat)return;
 
 chat.messages.forEach(item=>{
@@ -312,7 +301,6 @@ img.src=item.image;
 img.alt="صورة مرسلة";
 div.appendChild(img);
 }
-
 $("chat").appendChild(div);
 });
 
@@ -324,17 +312,14 @@ $("chatList").replaceChildren();
 
 chats.slice().reverse().forEach(chat=>{
 const btn=document.createElement("button");
-
 btn.className="chat-item"+(chat.id===activeChatId?" active":"");
 
 const first=chat.messages.find(m=>m.role==="user");
-
 btn.textContent=chat.title||(first?first.text.slice(0,25):"محادثة جديدة");
 btn.disabled=sending||editing;
 
 btn.onclick=()=>{
 if(sending||editing)return;
-
 activeChatId=chat.id;
 renderChat();
 renderChatList();
@@ -343,7 +328,6 @@ closeSidebar();
 
 $("chatList").appendChild(btn);
 });
-
 }
 
 function saveAndRender(){
@@ -363,7 +347,6 @@ messages:[]
 
 chats.push(chat);
 activeChatId=chat.id;
-
 saveAndRender();
 closeSidebar();
 showChatPage();
@@ -417,9 +400,7 @@ $("accountBtn").onclick=showAccountPage;
 $("backToChatBtn").onclick=showChatPage;
 
 function updateSession(session){
-
 currentUser=session?.user||null;
-
 const accepted=hasConsent();
 
 $("auth").classList.toggle("hidden",!!currentUser);
@@ -427,11 +408,11 @@ $("consent").classList.toggle("hidden",!currentUser||accepted);
 $("app").classList.toggle("hidden",!currentUser||!accepted);
 
 if(currentUser){
-
 $("userEmail").textContent=currentUser.email||"";
 
 if(accepted){
 loadChats();
+loadChatBackground();
 showChatPage();
 }else{
 chats=[];
@@ -441,18 +422,14 @@ $("chatList").replaceChildren();
 $("workspace").classList.remove("hidden");
 $("accountPage").classList.add("hidden");
 }
-
 }else{
-
 chats=[];
 activeChatId=null;
-
 $("chat").replaceChildren();
 $("chatList").replaceChildren();
-
 $("workspace").classList.remove("hidden");
 $("accountPage").classList.add("hidden");
-
+applyChatBackground(null);
 closeSidebar();
 }
 }
@@ -460,31 +437,22 @@ closeSidebar();
 /* الموافقة على الخصوصية */
 
 $("yesConsent").onclick=async()=>{
-
 $("yesConsent").disabled=true;
 showMessage("consentMessage","جاري حفظ موافقتك...");
 
 try{
-
 const {data,error}=await db.auth.updateUser({
 data:{
 chat_review_consent:true,
 chat_review_consent_at:new Date().toISOString()
 }
 });
-
 if(error)throw error;
-
 updateSession({user:data.user});
-
 }catch(error){
-
 showMessage("consentMessage","تعذر حفظ الموافقة: "+error.message);
-
 }finally{
-
 $("yesConsent").disabled=false;
-
 }
 };
 
@@ -493,43 +461,32 @@ showMessage("consentMessage","لم توافق، لذلك لن تتمكن من ا
 };
 
 $("revokeConsentBtn").onclick=async()=>{
-
 if(!currentUser)return;
 
 const confirmed=confirm("هل تريد إلغاء موافقتك؟ لن تتمكن من استخدام الشات بعد ذلك.");
-
 if(!confirmed)return;
 
 $("revokeConsentBtn").disabled=true;
 
 try{
-
 const {data,error}=await db.auth.updateUser({
 data:{
 chat_review_consent:false,
 chat_review_consent_revoked_at:new Date().toISOString()
 }
 });
-
 if(error)throw error;
-
 updateSession({user:data.user});
-
 }catch(error){
-
 alert("تعذر إلغاء الموافقة: "+error.message);
-
 }finally{
-
 $("revokeConsentBtn").disabled=false;
-
 }
 };
 
 /* تسجيل الدخول */
 
 $("loginBtn").onclick=async()=>{
-
 const email=$("email").value.trim();
 const password=$("password").value;
 
@@ -541,30 +498,19 @@ $("loginBtn").disabled=true;
 showMessage("authMessage","جاري تسجيل الدخول...");
 
 try{
-
-const {data,error}=await db.auth.signInWithPassword({
-email,password
-});
-
+const {data,error}=await db.auth.signInWithPassword({email,password});
 if(error)throw error;
-
 updateSession(data.session);
-
 }catch(error){
-
 showMessage("authMessage",error.message);
-
 }finally{
-
 $("loginBtn").disabled=false;
-
 }
 };
 
 /* إنشاء حساب */
 
 $("signupBtn").onclick=async()=>{
-
 const email=$("email").value.trim();
 const password=$("password").value;
 
@@ -579,11 +525,7 @@ return showMessage("authMessage","كلمة المرور 6 أحرف على الأ
 $("signupBtn").disabled=true;
 
 try{
-
-const {data,error}=await db.auth.signUp({
-email,password
-});
-
+const {data,error}=await db.auth.signUp({email,password});
 if(error)throw error;
 
 if(data.session){
@@ -591,28 +533,19 @@ updateSession(data.session);
 }else{
 showMessage("authMessage","راجع بريدك لتأكيد الحساب");
 }
-
 }catch(error){
-
 showMessage("authMessage",error.message);
-
 }finally{
-
 $("signupBtn").disabled=false;
-
 }
 };
 
 /* تسجيل الخروج */
 
 $("logoutBtn").onclick=async()=>{
-
 stopCamera();
-
 const {error}=await db.auth.signOut();
-
 if(error)alert(error.message);
-
 };
 
 /* القائمة الجانبية */
@@ -628,53 +561,40 @@ $("newChatBtn").onclick=createNewChat;
 /* الصور */
 
 function showPreview(dataUrl){
-
 selectedImage=dataUrl;
-
 $("previewImage").src=dataUrl;
 $("previewBox").classList.remove("hidden");
 $("editBox").classList.remove("hidden");
 $("attachMenu").classList.add("hidden");
-
 showMessage("editMessage","");
 }
 
 function clearSelectedImage(){
-
 selectedImage=null;
-
 $("previewImage").removeAttribute("src");
 $("previewBox").classList.add("hidden");
 $("editBox").classList.add("hidden");
 $("editPrompt").value="";
 $("editMessage").textContent="";
 $("imageInput").value="";
-
 }
 
 async function compressImage(file){
-
 if(!file.type.startsWith("image/")){
 throw new Error("اختار صورة صحيحة");
 }
 
 const source=await createImageBitmap(file);
-
 const scale=Math.min(1,1280/Math.max(source.width,source.height));
-
 const canvas=document.createElement("canvas");
 
 canvas.width=Math.round(source.width*scale);
 canvas.height=Math.round(source.height*scale);
 
-canvas.getContext("2d").drawImage(
-source,0,0,canvas.width,canvas.height
-);
-
+canvas.getContext("2d").drawImage(source,0,0,canvas.width,canvas.height);
 source.close();
 
 return canvas.toDataURL("image/jpeg",0.72);
-
 }
 
 $("attachBtn").onclick=()=>{
@@ -687,19 +607,13 @@ $("imageInput").click();
 };
 
 $("imageInput").onchange=async()=>{
-
 const file=$("imageInput").files?.[0];
-
 if(!file)return;
 
 try{
-
 showPreview(await compressImage(file));
-
 }catch(error){
-
 alert(error.message);
-
 }
 };
 
@@ -708,24 +622,18 @@ $("removeImageBtn").onclick=clearSelectedImage;
 /* تعديل الصور */
 
 $("editImageBtn").onclick=async()=>{
-
 if(editing||!selectedImage)return;
 
 const prompt=$("editPrompt").value.trim();
-
 if(!prompt)return showMessage("editMessage","اكتب وصف التعديل");
 
 editing=true;
-
 $("editImageBtn").disabled=true;
-
 showMessage("editMessage","جاري التعديل...");
 
 try{
-
 const {data}=await db.auth.getSession();
 const token=data.session?.access_token;
-
 if(!token)throw new Error("سجل دخولك مرة تانية");
 
 const response=await fetch("/api/edit",{
@@ -734,44 +642,28 @@ headers:{
 "Content-Type":"application/json",
 "Authorization":"Bearer "+token
 },
-body:JSON.stringify({
-image:selectedImage,
-prompt:prompt
-})
+body:JSON.stringify({image:selectedImage,prompt:prompt})
 });
 
 const result=await response.json();
-
-if(!response.ok){
-throw new Error(result.error||"فشل التعديل");
-}
-
-if(!result.image){
-throw new Error("لم يتم إنشاء صورة");
-}
+if(!response.ok)throw new Error(result.error||"فشل التعديل");
+if(!result.image)throw new Error("لم يتم إنشاء صورة");
 
 showPreview(result.image);
-
 $("editPrompt").value="";
-
 showMessage("editMessage","تم تعديل الصورة");
 
 }catch(error){
-
 showMessage("editMessage","تعذر التعديل: "+error.message);
-
 }finally{
-
 editing=false;
 $("editImageBtn").disabled=false;
-
 }
 };
 
 /* الكاميرا */
 
 async function openCamera(){
-
 $("attachMenu").classList.add("hidden");
 
 if(!navigator.mediaDevices?.getUserMedia){
@@ -781,7 +673,6 @@ return showMessage("cameraMessage","المتصفح لا يدعم فتح الكا
 $("cameraModal").classList.remove("hidden");
 
 try{
-
 cameraStream=await navigator.mediaDevices.getUserMedia({
 video:{facingMode:{ideal:"environment"}},
 audio:false
@@ -791,90 +682,63 @@ $("cameraVideo").srcObject=cameraStream;
 
 const track=cameraStream.getVideoTracks()[0];
 const caps=track.getCapabilities?.();
-
 $("flashBtn").classList.toggle("hidden",!caps?.torch);
-
 showMessage("cameraMessage","الكاميرا جاهزة");
 
 }catch(error){
-
 showMessage("cameraMessage","تعذر فتح الكاميرا أو لم يتم السماح بها");
-
 }
 }
 
 function stopCamera(){
-
 if(cameraStream){
 cameraStream.getTracks().forEach(track=>track.stop());
 }
 
 cameraStream=null;
 torchOn=false;
-
 $("cameraVideo").srcObject=null;
 $("cameraModal").classList.add("hidden");
 $("flashBtn").textContent="⚡ تشغيل الفلاش";
-
 }
 
 $("cameraBtn").onclick=openCamera;
 $("closeCameraBtn").onclick=stopCamera;
 
 $("flashBtn").onclick=async()=>{
-
 const track=cameraStream?.getVideoTracks()[0];
-
 if(!track)return;
 
 try{
-
 torchOn=!torchOn;
-
-await track.applyConstraints({
-advanced:[{torch:torchOn}]
-});
-
+await track.applyConstraints({advanced:[{torch:torchOn}]});
 $("flashBtn").textContent=torchOn?"⚡ إيقاف الفلاش":"⚡ تشغيل الفلاش";
-
 }catch{
-
 torchOn=false;
-
 showMessage("cameraMessage","الفلاش غير مدعوم");
-
 }
 };
 
 $("captureBtn").onclick=()=>{
-
 const video=$("cameraVideo");
-
 if(!video.videoWidth){
 return showMessage("cameraMessage","استنى الكاميرا تشتغل");
 }
 
 const canvas=document.createElement("canvas");
-
 const scale=Math.min(1,1280/Math.max(video.videoWidth,video.videoHeight));
 
 canvas.width=Math.round(video.videoWidth*scale);
 canvas.height=Math.round(video.videoHeight*scale);
 
-canvas.getContext("2d").drawImage(
-video,0,0,canvas.width,canvas.height
-);
-
+canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
 showPreview(canvas.toDataURL("image/jpeg",0.72));
-
 stopCamera();
-
 };
 
 /* إرسال الرسائل */
 
 $("chatForm").onsubmit=async e=>{
-
 e.preventDefault();
 
 if(sending||editing||!currentUser||!hasConsent())return;
@@ -885,13 +749,10 @@ const image=selectedImage;
 if(!message&&!image)return;
 
 const chat=activeChat();
-
 if(!chat)return;
 
 sending=true;
-
 $("message").value="";
-
 clearSelectedImage();
 
 const userItem={
@@ -912,7 +773,6 @@ text:"جاري التفكير..."
 };
 
 chat.messages.push(replyItem);
-
 saveAndRender();
 
 $("sendBtn").disabled=true;
@@ -920,7 +780,6 @@ $("attachBtn").disabled=true;
 $("newChatBtn").disabled=true;
 
 try{
-
 await saveMessageToDatabase(
 chat,
 "user",
@@ -928,21 +787,17 @@ message||(image?"[صورة مرفقة]":"")
 );
 
 const {data,error}=await db.auth.getSession();
-
 if(error)throw error;
 
 const token=data.session?.access_token;
-
 if(!token)throw new Error("سجل دخولك مرة تانية");
 
 const recent=chat.messages.slice(0,-1).slice(-4);
 
 const history=recent.map((item,index)=>{
-
 const last=index===recent.length-1;
 
 if(item.role==="user"&&last&&image){
-
 const parts=[];
 
 if(item.text){
@@ -957,18 +812,13 @@ type:"image_url",
 image_url:{url:image}
 });
 
-return {
-role:"user",
-content:parts
-};
-
+return {role:"user",content:parts};
 }
 
 return {
 role:item.role,
 content:(item.text||"").slice(0,1500)
 };
-
 });
 
 const response=await fetch("/api/chat",{
@@ -987,77 +837,122 @@ throw new Error(result.error||"حصل خطأ في خدمة الذكاء الاص
 }
 
 replyItem.text=result.reply||"مفيش رد متاح";
-
 saveChats();
 renderChat();
 
 try{
-
 await saveMessageToDatabase(chat,"assistant",replyItem.text);
-
 }catch(saveError){
-
 console.error("تعذر حفظ رد المساعد:",saveError);
-
 replyItem.text+="\n\nتنبيه: الرد ظهر لك، لكن تعذر حفظه في سجل المحادثات.";
-
 }
 
 }catch(error){
-
 replyItem.text="حصل خطأ: "+error.message;
-
 }finally{
-
 saveChats();
 renderChat();
 renderChatList();
 
 sending=false;
-
 $("sendBtn").disabled=false;
 $("attachBtn").disabled=false;
 $("newChatBtn").disabled=false;
-
 $("message").focus();
+}
+};
 
+/* خلفية خاصة بمنطقة الشات */
+
+function chatBackgroundKey(){
+return "alex-chat-background-"+currentUser.id;
+}
+
+function applyChatBackground(dataUrl){
+if(dataUrl){
+$("chat").style.backgroundImage=
+`linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,.22)),url("${dataUrl}")`;
+}else{
+$("chat").style.backgroundImage="none";
+}
+}
+
+function loadChatBackground(){
+if(!currentUser)return;
+
+try{
+const saved=localStorage.getItem(chatBackgroundKey());
+applyChatBackground(saved);
+}catch(error){
+console.error("تعذر تحميل خلفية الشات:",error);
+}
+}
+
+$("chatBgBtn").onclick=()=>{
+if(!currentUser)return;
+$("chatBgInput").click();
+};
+
+$("chatBgInput").onchange=async()=>{
+const file=$("chatBgInput").files?.[0];
+if(!file)return;
+
+try{
+if(!file.type.startsWith("image/")){
+throw new Error("اختار صورة صحيحة");
+}
+
+const image=await compressImage(file);
+
+try{
+localStorage.setItem(chatBackgroundKey(),image);
+}catch(error){
+throw new Error("الصورة كبيرة على مساحة التخزين. جرب صورة أصغر.");
+}
+
+applyChatBackground(image);
+alert("تم تغيير خلفية الشات بنجاح");
+
+}catch(error){
+alert(error.message);
+}
+
+$("chatBgInput").value="";
+};
+
+$("resetChatBgBtn").onclick=()=>{
+if(!currentUser)return;
+
+try{
+localStorage.removeItem(chatBackgroundKey());
+applyChatBackground(null);
+alert("تمت إعادة الخلفية الافتراضية");
+}catch(error){
+alert("تعذر إزالة الخلفية");
 }
 };
 
 /* الوضع الأبيض والأسود */
 
 $("themeBtn").onclick=()=>{
-
 const light=document.body.classList.toggle("light-mode");
 
 try{
-
 localStorage.setItem("alex-theme",light?"light":"dark");
-
 }catch(error){
-
 console.error(error);
-
 }
 
 $("themeBtn").textContent=light?"الوضع الأسود":"الوضع الأبيض";
-
 };
 
 try{
-
 if(localStorage.getItem("alex-theme")==="light"){
-
 document.body.classList.add("light-mode");
-
 $("themeBtn").textContent="الوضع الأسود";
-
 }
-
 }catch(error){
-
 console.error(error);
-
 }
 
 /* متابعة جلسة المستخدم */
@@ -1067,16 +962,12 @@ updateSession(session);
 });
 
 db.auth.getSession().then(({data,error})=>{
-
 if(error){
 console.error(error);
 return;
 }
-
 updateSession(data.session);
-
 });
-
 </script>
 </body>
 </html>
