@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -233,7 +232,7 @@ body.sidebar-closed #sidebar{display:none}
 
 <script>
 const SUPABASE_URL="https://hbfdrtgmalvlixwuujgf.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_vBz40TiOn08eysk3uiQhYQ_lLv_QphJ";
+const SUPABASE_ANON_KEY="sb_publishable_vBz40TiOn08eysk3uiHqYQ_lLv_QphJ";
 
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const $=id=>document.getElementById(id);
@@ -792,27 +791,25 @@ if(error)throw error;
 const token=data.session?.access_token;
 if(!token)throw new Error("سجل دخولك مرة تانية");
 
-const recent=chat.messages.slice(0,-1).slice(-4);
+/* التعديل الأساسي: إرسال الصور السابقة مع سجل المحادثة */
 
-const history=recent.map((item,index)=>{
-const last=index===recent.length-1;
+const recent=chat.messages.slice(0,-1).slice(-8);
 
-if(item.role==="user"&&last&&image){
-const parts=[];
-
-if(item.text){
-parts.push({
+const history=recent.map(item=>{
+if(item.role==="user"&&item.image){
+return {
+role:"user",
+content:[
+{
 type:"text",
-text:item.text.slice(0,1500)
-});
-}
-
-parts.push({
+text:(item.text||"حلل الصورة المرفقة ووصف محتواها").slice(0,1500)
+},
+{
 type:"image_url",
-image_url:{url:image}
-});
-
-return {role:"user",content:parts};
+image_url:{url:item.image}
+}
+]
+};
 }
 
 return {
