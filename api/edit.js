@@ -1,3 +1,4 @@
+
 export const config = {
   api: {
     bodyParser: {
@@ -13,7 +14,11 @@ export default async function handler(req, res) {
 
   try {
     // التحقق من تسجيل الدخول
-    const token = req.headers.authorization?.replace("Bearer ", "");
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
+
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
@@ -21,27 +26,53 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "سجل دخولك أولاً" });
     }
 
-    const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const authResponse = await fetch(
+      `${supabaseUrl}/auth/v1/user`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!authResponse.ok) {
-      return res.status(401).json({ error: "جلسة الدخول غير صالحة" });
+      return res.status(401).json({
+        error: "جلسة الدخول غير صالحة",
+      });
     }
 
+    const user = await authResponse.json();
+
+    if (!user?.id) {
+      return res.status(401).json({
+        error: "تعذر التحقق من المستخدم",
+      });
+    }
+
+    // التحقق من البيانات
     const { image, prompt } = req.body || {};
 
-    if (!image || !prompt?.trim()) {
+    if (
+      typeof image !== "string" ||
+      typeof prompt !== "string" ||
+      !prompt.trim()
+    ) {
       return res.status(400).json({
         error: "الصورة ووصف التعديل مطلوبين",
       });
     }
 
+    if (prompt.trim().length > 500) {
+      return res.status(400).json({
+        error: "وصف التعديل طويل جداً",
+      });
+    }
+
     if (image.length > 4000000) {
-      return res.status(413).json({ error: "حجم الصورة كبير" });
+      return res.status(413).json({
+        error: "حجم الصورة كبير",
+      });
     }
 
     const match = image.match(
@@ -49,14 +80,16 @@ export default async function handler(req, res) {
     );
 
     if (!match) {
-      return res.status(400).json({ error: "صيغة الصورة غير مدعومة" });
+      return res.status(400).json({
+        error: "صيغة الصورة غير مدعومة",
+      });
     }
 
     const apiKey = process.env.PHOTOROOM_API_KEY;
 
     if (!apiKey) {
       return res.status(500).json({
-        error: "مفتاح Photoroom غير موجود",
+        error: "خدمة تعديل الصور غير مهيأة",
       });
     }
 
@@ -92,26 +125,27 @@ export default async function handler(req, res) {
     );
 
     if (!response.ok) {
-      const error = await response.text();
-      return res.status(response.status).json({
-        error: error.slice(0, 500) || "فشل تعديل الصورة",
+      console.error("Photoroom error:", response.status);
+
+      return res.status(502).json({
+        error: "تعذر تعديل الصورة حالياً",
       });
     }
 
     const contentType =
-      response.headers.get("content-type") || "image/png";
+      response.headers.get("content-type") || "";
 
     if (!contentType.startsWith("image/")) {
       return res.status(502).json({
-        error: "استجابة غير متوقعة من Photoroom",
+        error: "استجابة غير متوقعة من خدمة الصور",
       });
     }
 
     const result = Buffer.from(await response.arrayBuffer());
 
-    if (!result.length) {
+    if (!result.length || result.length > 5 * 1024 * 1024) {
       return res.status(502).json({
-        error: "الصورة الناتجة فارغة",
+        error: "الصورة الناتجة غير صالحة أو كبيرة جداً",
       });
     }
 
