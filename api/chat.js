@@ -1,17 +1,57 @@
 
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const apiKey = process.env.GROQ_API_KEY;
+    // 1. التحقق من تسجيل الدخول
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : "";
 
-    if (!apiKey) {
-      return res.status(500).json({ error: "GROQ_API_KEY is missing" });
+    if (!token) {
+      return res.status(401).json({ error: "يجب تسجيل الدخول أولاً" });
     }
 
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    const groqKey = process.env.GROQ_API_KEY;
+
+    if (!supabaseUrl || !supabaseKey || !groqKey) {
+      return res.status(500).json({ error: "Server configuration error" });
+    }
+
+    // 2. التحقق من التوكن لدى Supabase
+    const authResponse = await fetch(
+      `${supabaseUrl}/auth/v1/user`,
+      {
+        method: "GET",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!authResponse.ok) {
+      return res.status(401).json({ error: "جلسة الدخول غير صالحة" });
+    }
+
+    const user = await authResponse.json();
+
+    if (!user || !user.id) {
+      return res.status(401).json({ error: "تعذر التحقق من المستخدم" });
+    }
+
+    // 3. فحص حجم الطلب
     const body = req.body || {};
+
+    if (Buffer.byteLength(JSON.stringify(body), "utf8") > 5 * 1024 * 1024) {
+      return res.status(413).json({ error: "حجم الطلب كبير جداً" });
+    }
 
     let messages = Array.isArray(body.messages)
       ? body.messages
@@ -53,7 +93,7 @@ module.exports = async (req, res) => {
             .slice(0, 4);
 
           return {
-            role: "user",
+            role: m.role,
             content: parts
           };
         }
@@ -81,13 +121,14 @@ module.exports = async (req, res) => {
       content: "You are ALEX AI, a helpful assistant. Reply naturally in the user's language, especially Egyptian Arabic when appropriate. If the user sends an image, understand it and answer their question about it."
     });
 
+    // 4. إرسال الطلب إلى Groq
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
+          "Authorization": `Bearer ${groqKey}`
         },
         body: JSON.stringify({
           model: hasImage
@@ -103,15 +144,15 @@ module.exports = async (req, res) => {
 
     if (!response.ok) {
       console.error("Groq API Error:", data);
-      return res.status(response.status).json({
-        error: data.error?.message || "AI service error"
+      return res.status(502).json({
+        error: "خدمة الذكاء الاصطناعي غير متاحة حالياً"
       });
     }
 
     const reply = data.choices?.[0]?.message?.content;
 
     if (!reply) {
-      return res.status(500).json({ error: "No reply received" });
+      return res.status(502).json({ error: "No reply received" });
     }
 
     return res.status(200).json({ reply });
@@ -123,5 +164,3 @@ module.exports = async (req, res) => {
     });
   }
 };
-
-
