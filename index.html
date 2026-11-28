@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -94,7 +95,6 @@ h1{font-size:27px}
 #accountPage{margin:10px auto}
 .chat-toolbar button{padding:9px;font-size:12px}
 }
-
 #sidebarBackdrop{display:none}
 body.sidebar-closed #workspace{grid-template-columns:minmax(0,1fr)}
 body.sidebar-closed #sidebar{display:none}
@@ -102,14 +102,12 @@ body.sidebar-closed #sidebar{display:none}
 </head>
 
 <body>
-
 <header>
 <span>◈ ALEX AI</span>
 <button id="themeBtn" class="secondary">الوضع الأبيض</button>
 </header>
 
 <main>
-
 <h1>أهلاً بك في <span>ALEX AI</span></h1>
 <p>مساعدك الذكي في كل شيء</p>
 
@@ -124,25 +122,19 @@ body.sidebar-closed #sidebar{display:none}
 
 <section id="consent" class="panel hidden">
 <h3>تنبيه الخصوصية</h3>
-<p>
-هل توافق على حفظ محادثاتك النصية وإمكانية مراجعتها من قِبل مسؤول الموقع لأغراض الإدارة والدعم؟
-يمكنك إلغاء موافقتك لاحقًا. اختيار «لا أوافق» يعني عدم إتاحة الشات لك.
-</p>
+<p>هل توافق على حفظ محادثاتك النصية وإمكانية مراجعتها من قِبل مسؤول الموقع لأغراض الإدارة والدعم؟ يمكنك إلغاء موافقتك لاحقًا. اختيار «لا أوافق» يعني عدم إتاحة الشات لك.</p>
 <button id="yesConsent">نعم، أوافق</button>
 <button id="noConsent" class="secondary">لا أوافق</button>
 <p id="consentMessage"></p>
 </section>
 
 <section id="app" class="hidden">
-
 <div id="workspace">
-
 <aside id="sidebar" class="panel">
 <div class="sidebar-head">
 <h3>محادثاتي</h3>
 <button id="closeSidebarBtn" class="secondary">✕</button>
 </div>
-
 <button id="newChatBtn">＋ شات جديد</button>
 <button id="accountBtn">👤 حسابي</button>
 <div id="chatList"></div>
@@ -151,7 +143,6 @@ body.sidebar-closed #sidebar{display:none}
 <div id="sidebarBackdrop"></div>
 
 <div id="chatArea">
-
 <div class="chat-toolbar">
 <button id="menuBtn" class="secondary">☰</button>
 <strong>ALEX AI</strong>
@@ -163,7 +154,6 @@ body.sidebar-closed #sidebar{display:none}
 <div id="chat" class="panel"></div>
 
 <div id="composer">
-
 <div id="previewBox" class="hidden">
 <img id="previewImage" alt="معاينة الصورة">
 <span>الصورة جاهزة</span>
@@ -187,7 +177,6 @@ body.sidebar-closed #sidebar{display:none}
 <input id="message" placeholder="اكتب رسالتك هنا...">
 <button id="sendBtn" type="submit">➤</button>
 </form>
-
 <input id="imageInput" type="file" accept="image/*" class="hidden">
 </div>
 </div>
@@ -196,17 +185,14 @@ body.sidebar-closed #sidebar{display:none}
 <section id="accountPage" class="panel hidden">
 <button id="backToChatBtn" class="secondary">← الرجوع إلى المحادثات</button>
 <h2 class="account-title">👤 حسابي</h2>
-
 <div class="account-row">
 <div class="account-label">البريد الإلكتروني</div>
 <div id="userEmail" class="account-email"></div>
 </div>
-
 <div class="account-row">
 <div class="account-label">حالة الحساب</div>
 <strong>الحساب نشط</strong>
 </div>
-
 <div class="account-actions">
 <button id="revokeConsentBtn" class="secondary">إلغاء الموافقة</button>
 <button id="logoutBtn" class="secondary">تسجيل الخروج</button>
@@ -233,7 +219,6 @@ body.sidebar-closed #sidebar{display:none}
 <script>
 const SUPABASE_URL="https://hbfdrtgmalvlixwuujgf.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_vBz40TiOn08eysk3uiHqYQ_lLv_QphJ";
-
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const $=id=>document.getElementById(id);
 
@@ -246,29 +231,15 @@ let cameraStream=null;
 let torchOn=false;
 let editing=false;
 
-function showMessage(id,text){
-$(id).textContent=text;
-}
-
-function storageKey(){
-return "alex-chats-"+currentUser.id;
-}
-
-function activeChat(){
-return chats.find(c=>c.id===activeChatId);
-}
-
-function hasConsent(){
-return currentUser?.user_metadata?.chat_review_consent===true;
-}
+function showMessage(id,text){$(id).textContent=text}
+function storageKey(){return "alex-chats-"+currentUser.id}
+function activeChat(){return chats.find(c=>c.id===activeChatId)}
+function hasConsent(){return currentUser?.user_metadata?.chat_review_consent===true}
 
 function saveChats(){
 if(!currentUser)return;
-try{
-localStorage.setItem(storageKey(),JSON.stringify(chats));
-}catch(error){
-console.error("تعذر حفظ المحادثات محليًا:",error);
-}
+try{localStorage.setItem(storageKey(),JSON.stringify(chats))}
+catch(error){console.error("تعذر حفظ المحادثات محليًا:",error)}
 }
 
 async function saveMessageToDatabase(chat,role,content){
@@ -289,7 +260,6 @@ if(!chat)return;
 chat.messages.forEach(item=>{
 const div=document.createElement("div");
 div.className="msg "+(item.role==="user"?"user":"bot");
-
 const text=document.createElement("div");
 text.textContent=item.text||"";
 div.appendChild(text);
@@ -302,21 +272,17 @@ div.appendChild(img);
 }
 $("chat").appendChild(div);
 });
-
 $("chat").scrollTop=$("chat").scrollHeight;
 }
 
 function renderChatList(){
 $("chatList").replaceChildren();
-
 chats.slice().reverse().forEach(chat=>{
 const btn=document.createElement("button");
 btn.className="chat-item"+(chat.id===activeChatId?" active":"");
-
 const first=chat.messages.find(m=>m.role==="user");
-btn.textContent=chat.title||(first?first.text.slice(0,25):"محادثة جديدة");
+btn.textContent=chat.title||(first?(first.text||"صورة مرفقة").slice(0,25):"محادثة جديدة");
 btn.disabled=sending||editing;
-
 btn.onclick=()=>{
 if(sending||editing)return;
 activeChatId=chat.id;
@@ -324,7 +290,6 @@ renderChat();
 renderChatList();
 closeSidebar();
 };
-
 $("chatList").appendChild(btn);
 });
 }
@@ -337,13 +302,7 @@ renderChatList();
 
 function createNewChat(){
 if(sending||editing)return;
-
-const chat={
-id:String(Date.now()),
-title:"محادثة جديدة",
-messages:[]
-};
-
+const chat={id:String(Date.now()),title:"محادثة جديدة",messages:[]};
 chats.push(chat);
 activeChatId=chat.id;
 saveAndRender();
@@ -351,35 +310,91 @@ closeSidebar();
 showChatPage();
 }
 
-function loadChats(){
+async function loadChats(){
+let localChats=[];
 try{
 const saved=JSON.parse(localStorage.getItem(storageKey())||"[]");
-chats=Array.isArray(saved)?saved:[];
-}catch{
-chats=[];
+localChats=Array.isArray(saved)?saved:[];
+}catch{localChats=[]}
+
+try{
+const {data,error}=await db
+.from("alex_messages")
+.select("chat_id,role,content,created_at")
+.eq("user_id",currentUser.id)
+.order("created_at",{ascending:true});
+
+if(error)throw error;
+
+const grouped={};
+
+(data||[]).forEach(row=>{
+if(!grouped[row.chat_id]){
+grouped[row.chat_id]={
+id:row.chat_id,
+title:"محادثة جديدة",
+messages:[]
+};
+}
+
+const content=row.content||"";
+const localChat=localChats.find(c=>c.id===row.chat_id);
+const localMessages=localChat?.messages||[];
+
+const matchIndex=localMessages.findIndex(m=>
+m.role===row.role&&(
+m.text===content||
+(m.role==="user"&&m.image&&content==="[صورة مرفقة]")
+)
+);
+
+let localMatch=null;
+if(matchIndex!==-1){
+localMatch=localMessages.splice(matchIndex,1)[0];
+}
+
+grouped[row.chat_id].messages.push({
+role:row.role,
+text:content==="[صورة مرفقة]"?"":content,
+image:localMatch?.image||null
+});
+});
+
+chats=Object.values(grouped);
+
+chats.forEach(chat=>{
+const first=chat.messages.find(m=>m.role==="user");
+chat.title=first?.text?.slice(0,25)||"محادثة جديدة";
+const oldChat=localChats.find(c=>c.id===chat.id);
+if(oldChat?.title&&oldChat.title!=="محادثة جديدة"){
+chat.title=oldChat.title;
+}
+});
+
+if(!chats.length){
+chats=localChats;
 }
 
 if(!chats.length){
-chats=[{
-id:String(Date.now()),
-title:"محادثة جديدة",
-messages:[]
-}];
+chats=[{id:String(Date.now()),title:"محادثة جديدة",messages:[]}];
 }
 
 activeChatId=chats[chats.length-1].id;
 saveAndRender();
+
+}catch(error){
+console.error("خطأ تحميل المحادثات:",error);
+chats=localChats;
+if(!chats.length){
+chats=[{id:String(Date.now()),title:"محادثة جديدة",messages:[]}];
+}
+activeChatId=chats[chats.length-1].id;
+saveAndRender();
+}
 }
 
-function closeSidebar(){
-document.body.classList.remove("sidebar-open");
-}
-
-function openSidebar(){
-document.body.classList.add("sidebar-open");
-}
-
-/* التنقل بين الصفحات */
+function closeSidebar(){document.body.classList.remove("sidebar-open")}
+function openSidebar(){document.body.classList.add("sidebar-open")}
 
 function showAccountPage(){
 $("workspace").classList.add("hidden");
@@ -408,7 +423,6 @@ $("app").classList.toggle("hidden",!currentUser||!accepted);
 
 if(currentUser){
 $("userEmail").textContent=currentUser.email||"";
-
 if(accepted){
 loadChats();
 loadChatBackground();
@@ -433,12 +447,9 @@ closeSidebar();
 }
 }
 
-/* الموافقة على الخصوصية */
-
 $("yesConsent").onclick=async()=>{
 $("yesConsent").disabled=true;
 showMessage("consentMessage","جاري حفظ موافقتك...");
-
 try{
 const {data,error}=await db.auth.updateUser({
 data:{
@@ -450,9 +461,7 @@ if(error)throw error;
 updateSession({user:data.user});
 }catch(error){
 showMessage("consentMessage","تعذر حفظ الموافقة: "+error.message);
-}finally{
-$("yesConsent").disabled=false;
-}
+}finally{$("yesConsent").disabled=false}
 };
 
 $("noConsent").onclick=()=>{
@@ -461,12 +470,9 @@ showMessage("consentMessage","لم توافق، لذلك لن تتمكن من ا
 
 $("revokeConsentBtn").onclick=async()=>{
 if(!currentUser)return;
-
 const confirmed=confirm("هل تريد إلغاء موافقتك؟ لن تتمكن من استخدام الشات بعد ذلك.");
 if(!confirmed)return;
-
 $("revokeConsentBtn").disabled=true;
-
 try{
 const {data,error}=await db.auth.updateUser({
 data:{
@@ -476,70 +482,38 @@ chat_review_consent_revoked_at:new Date().toISOString()
 });
 if(error)throw error;
 updateSession({user:data.user});
-}catch(error){
-alert("تعذر إلغاء الموافقة: "+error.message);
-}finally{
-$("revokeConsentBtn").disabled=false;
-}
+}catch(error){alert("تعذر إلغاء الموافقة: "+error.message)}
+finally{$("revokeConsentBtn").disabled=false}
 };
-
-/* تسجيل الدخول */
 
 $("loginBtn").onclick=async()=>{
 const email=$("email").value.trim();
 const password=$("password").value;
-
-if(!email||!password){
-return showMessage("authMessage","اكتب البريد وكلمة المرور");
-}
-
+if(!email||!password)return showMessage("authMessage","اكتب البريد وكلمة المرور");
 $("loginBtn").disabled=true;
 showMessage("authMessage","جاري تسجيل الدخول...");
-
 try{
 const {data,error}=await db.auth.signInWithPassword({email,password});
 if(error)throw error;
 updateSession(data.session);
-}catch(error){
-showMessage("authMessage",error.message);
-}finally{
-$("loginBtn").disabled=false;
-}
+}catch(error){showMessage("authMessage",error.message)}
+finally{$("loginBtn").disabled=false}
 };
-
-/* إنشاء حساب */
 
 $("signupBtn").onclick=async()=>{
 const email=$("email").value.trim();
 const password=$("password").value;
-
-if(!email||!password){
-return showMessage("authMessage","اكتب البريد وكلمة المرور");
-}
-
-if(password.length<6){
-return showMessage("authMessage","كلمة المرور 6 أحرف على الأقل");
-}
-
+if(!email||!password)return showMessage("authMessage","اكتب البريد وكلمة المرور");
+if(password.length<6)return showMessage("authMessage","كلمة المرور 6 أحرف على الأقل");
 $("signupBtn").disabled=true;
-
 try{
 const {data,error}=await db.auth.signUp({email,password});
 if(error)throw error;
-
-if(data.session){
-updateSession(data.session);
-}else{
-showMessage("authMessage","راجع بريدك لتأكيد الحساب");
-}
-}catch(error){
-showMessage("authMessage",error.message);
-}finally{
-$("signupBtn").disabled=false;
-}
+if(data.session)updateSession(data.session);
+else showMessage("authMessage","راجع بريدك لتأكيد الحساب");
+}catch(error){showMessage("authMessage",error.message)}
+finally{$("signupBtn").disabled=false}
 };
-
-/* تسجيل الخروج */
 
 $("logoutBtn").onclick=async()=>{
 stopCamera();
@@ -547,17 +521,12 @@ const {error}=await db.auth.signOut();
 if(error)alert(error.message);
 };
 
-/* القائمة الجانبية */
-
 $("menuBtn").onclick=()=>{
 document.body.classList.contains("sidebar-open")?closeSidebar():openSidebar();
 };
-
 $("closeSidebarBtn").onclick=closeSidebar;
 $("sidebarBackdrop").onclick=closeSidebar;
 $("newChatBtn").onclick=createNewChat;
-
-/* الصور */
 
 function showPreview(dataUrl){
 selectedImage=dataUrl;
@@ -579,121 +548,79 @@ $("imageInput").value="";
 }
 
 async function compressImage(file){
-if(!file.type.startsWith("image/")){
-throw new Error("اختار صورة صحيحة");
-}
-
+if(!file.type.startsWith("image/"))throw new Error("اختار صورة صحيحة");
 const source=await createImageBitmap(file);
 const scale=Math.min(1,1280/Math.max(source.width,source.height));
 const canvas=document.createElement("canvas");
-
 canvas.width=Math.round(source.width*scale);
 canvas.height=Math.round(source.height*scale);
-
 canvas.getContext("2d").drawImage(source,0,0,canvas.width,canvas.height);
 source.close();
-
 return canvas.toDataURL("image/jpeg",0.72);
 }
 
-$("attachBtn").onclick=()=>{
-$("attachMenu").classList.toggle("hidden");
-};
-
+$("attachBtn").onclick=()=>{$("attachMenu").classList.toggle("hidden")};
 $("galleryBtn").onclick=()=>{
 $("attachMenu").classList.add("hidden");
 $("imageInput").click();
 };
-
 $("imageInput").onchange=async()=>{
 const file=$("imageInput").files?.[0];
 if(!file)return;
-
-try{
-showPreview(await compressImage(file));
-}catch(error){
-alert(error.message);
-}
+try{showPreview(await compressImage(file))}
+catch(error){alert(error.message)}
 };
-
 $("removeImageBtn").onclick=clearSelectedImage;
-
-/* تعديل الصور */
 
 $("editImageBtn").onclick=async()=>{
 if(editing||!selectedImage)return;
-
 const prompt=$("editPrompt").value.trim();
 if(!prompt)return showMessage("editMessage","اكتب وصف التعديل");
-
 editing=true;
 $("editImageBtn").disabled=true;
 showMessage("editMessage","جاري التعديل...");
-
 try{
 const {data}=await db.auth.getSession();
 const token=data.session?.access_token;
 if(!token)throw new Error("سجل دخولك مرة تانية");
-
 const response=await fetch("/api/edit",{
 method:"POST",
-headers:{
-"Content-Type":"application/json",
-"Authorization":"Bearer "+token
-},
+headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
 body:JSON.stringify({image:selectedImage,prompt:prompt})
 });
-
 const result=await response.json();
 if(!response.ok)throw new Error(result.error||"فشل التعديل");
 if(!result.image)throw new Error("لم يتم إنشاء صورة");
-
 showPreview(result.image);
 $("editPrompt").value="";
 showMessage("editMessage","تم تعديل الصورة");
-
-}catch(error){
-showMessage("editMessage","تعذر التعديل: "+error.message);
-}finally{
-editing=false;
-$("editImageBtn").disabled=false;
-}
+}catch(error){showMessage("editMessage","تعذر التعديل: "+error.message)}
+finally{editing=false;$("editImageBtn").disabled=false}
 };
-
-/* الكاميرا */
 
 async function openCamera(){
 $("attachMenu").classList.add("hidden");
-
 if(!navigator.mediaDevices?.getUserMedia){
 return showMessage("cameraMessage","المتصفح لا يدعم فتح الكاميرا");
 }
-
 $("cameraModal").classList.remove("hidden");
-
 try{
 cameraStream=await navigator.mediaDevices.getUserMedia({
 video:{facingMode:{ideal:"environment"}},
 audio:false
 });
-
 $("cameraVideo").srcObject=cameraStream;
-
 const track=cameraStream.getVideoTracks()[0];
 const caps=track.getCapabilities?.();
 $("flashBtn").classList.toggle("hidden",!caps?.torch);
 showMessage("cameraMessage","الكاميرا جاهزة");
-
 }catch(error){
 showMessage("cameraMessage","تعذر فتح الكاميرا أو لم يتم السماح بها");
 }
 }
 
 function stopCamera(){
-if(cameraStream){
-cameraStream.getTracks().forEach(track=>track.stop());
-}
-
+if(cameraStream)cameraStream.getTracks().forEach(track=>track.stop());
 cameraStream=null;
 torchOn=false;
 $("cameraVideo").srcObject=null;
@@ -707,7 +634,6 @@ $("closeCameraBtn").onclick=stopCamera;
 $("flashBtn").onclick=async()=>{
 const track=cameraStream?.getVideoTracks()[0];
 if(!track)return;
-
 try{
 torchOn=!torchOn;
 await track.applyConstraints({advanced:[{torch:torchOn}]});
@@ -720,31 +646,22 @@ showMessage("cameraMessage","الفلاش غير مدعوم");
 
 $("captureBtn").onclick=()=>{
 const video=$("cameraVideo");
-if(!video.videoWidth){
-return showMessage("cameraMessage","استنى الكاميرا تشتغل");
-}
-
+if(!video.videoWidth)return showMessage("cameraMessage","استنى الكاميرا تشتغل");
 const canvas=document.createElement("canvas");
 const scale=Math.min(1,1280/Math.max(video.videoWidth,video.videoHeight));
-
 canvas.width=Math.round(video.videoWidth*scale);
 canvas.height=Math.round(video.videoHeight*scale);
-
 canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
 showPreview(canvas.toDataURL("image/jpeg",0.72));
 stopCamera();
 };
 
-/* إرسال الرسائل */
-
 $("chatForm").onsubmit=async e=>{
 e.preventDefault();
-
 if(sending||editing||!currentUser||!hasConsent())return;
 
 const message=$("message").value.trim();
 const image=selectedImage;
-
 if(!message&&!image)return;
 
 const chat=activeChat();
@@ -754,23 +671,14 @@ sending=true;
 $("message").value="";
 clearSelectedImage();
 
-const userItem={
-role:"user",
-text:message,
-image:image||null
-};
-
+const userItem={role:"user",text:message,image:image||null};
 chat.messages.push(userItem);
 
 if(chat.title==="محادثة جديدة"){
 chat.title=message?message.slice(0,25):"صورة جديدة";
 }
 
-const replyItem={
-role:"assistant",
-text:"جاري التفكير..."
-};
-
+const replyItem={role:"assistant",text:"جاري التفكير..."};
 chat.messages.push(replyItem);
 saveAndRender();
 
@@ -779,43 +687,25 @@ $("attachBtn").disabled=true;
 $("newChatBtn").disabled=true;
 
 try{
-await saveMessageToDatabase(
-chat,
-"user",
-message||(image?"[صورة مرفقة]":"")
-);
+await saveMessageToDatabase(chat,"user",message||(image?"[صورة مرفقة]":""));
 
 const {data,error}=await db.auth.getSession();
 if(error)throw error;
-
 const token=data.session?.access_token;
 if(!token)throw new Error("سجل دخولك مرة تانية");
 
-/* التعديل الأساسي: إرسال الصور السابقة مع سجل المحادثة */
-
 const recent=chat.messages.slice(0,-1).slice(-8);
-
 const history=recent.map(item=>{
 if(item.role==="user"&&item.image){
 return {
 role:"user",
 content:[
-{
-type:"text",
-text:(item.text||"حلل الصورة المرفقة ووصف محتواها").slice(0,1500)
-},
-{
-type:"image_url",
-image_url:{url:item.image}
-}
+{type:"text",text:(item.text||"حلل الصورة المرفقة ووصف محتواها").slice(0,1500)},
+{type:"image_url",image_url:{url:item.image}}
 ]
 };
 }
-
-return {
-role:item.role,
-content:(item.text||"").slice(0,1500)
-};
+return {role:item.role,content:(item.text||"").slice(0,1500)};
 });
 
 const response=await fetch("/api/chat",{
@@ -828,10 +718,7 @@ body:JSON.stringify({messages:history})
 });
 
 const result=await response.json();
-
-if(!response.ok){
-throw new Error(result.error||"حصل خطأ في خدمة الذكاء الاصطناعي");
-}
+if(!response.ok)throw new Error(result.error||"حصل خطأ في خدمة الذكاء الاصطناعي");
 
 replyItem.text=result.reply||"مفيش رد متاح";
 saveChats();
@@ -843,14 +730,12 @@ await saveMessageToDatabase(chat,"assistant",replyItem.text);
 console.error("تعذر حفظ رد المساعد:",saveError);
 replyItem.text+="\n\nتنبيه: الرد ظهر لك، لكن تعذر حفظه في سجل المحادثات.";
 }
-
 }catch(error){
 replyItem.text="حصل خطأ: "+error.message;
 }finally{
 saveChats();
 renderChat();
 renderChatList();
-
 sending=false;
 $("sendBtn").disabled=false;
 $("attachBtn").disabled=false;
@@ -859,16 +744,11 @@ $("message").focus();
 }
 };
 
-/* خلفية خاصة بمنطقة الشات */
-
-function chatBackgroundKey(){
-return "alex-chat-background-"+currentUser.id;
-}
+function chatBackgroundKey(){return "alex-chat-background-"+currentUser.id}
 
 function applyChatBackground(dataUrl){
 if(dataUrl){
-$("chat").style.backgroundImage=
-`linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,.22)),url("${dataUrl}")`;
+$("chat").style.backgroundImage=`linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,.22)),url("${dataUrl}")`;
 }else{
 $("chat").style.backgroundImage="none";
 }
@@ -876,13 +756,10 @@ $("chat").style.backgroundImage="none";
 
 function loadChatBackground(){
 if(!currentUser)return;
-
 try{
 const saved=localStorage.getItem(chatBackgroundKey());
 applyChatBackground(saved);
-}catch(error){
-console.error("تعذر تحميل خلفية الشات:",error);
-}
+}catch(error){console.error("تعذر تحميل خلفية الشات:",error)}
 }
 
 $("chatBgBtn").onclick=()=>{
@@ -893,53 +770,30 @@ $("chatBgInput").click();
 $("chatBgInput").onchange=async()=>{
 const file=$("chatBgInput").files?.[0];
 if(!file)return;
-
 try{
-if(!file.type.startsWith("image/")){
-throw new Error("اختار صورة صحيحة");
-}
-
+if(!file.type.startsWith("image/"))throw new Error("اختار صورة صحيحة");
 const image=await compressImage(file);
-
-try{
-localStorage.setItem(chatBackgroundKey(),image);
-}catch(error){
-throw new Error("الصورة كبيرة على مساحة التخزين. جرب صورة أصغر.");
-}
-
+try{localStorage.setItem(chatBackgroundKey(),image)}
+catch(error){throw new Error("الصورة كبيرة على مساحة التخزين. جرب صورة أصغر.")}
 applyChatBackground(image);
 alert("تم تغيير خلفية الشات بنجاح");
-
-}catch(error){
-alert(error.message);
-}
-
+}catch(error){alert(error.message)}
 $("chatBgInput").value="";
 };
 
 $("resetChatBgBtn").onclick=()=>{
 if(!currentUser)return;
-
 try{
 localStorage.removeItem(chatBackgroundKey());
 applyChatBackground(null);
 alert("تمت إعادة الخلفية الافتراضية");
-}catch(error){
-alert("تعذر إزالة الخلفية");
-}
+}catch(error){alert("تعذر إزالة الخلفية")}
 };
-
-/* الوضع الأبيض والأسود */
 
 $("themeBtn").onclick=()=>{
 const light=document.body.classList.toggle("light-mode");
-
-try{
-localStorage.setItem("alex-theme",light?"light":"dark");
-}catch(error){
-console.error(error);
-}
-
+try{localStorage.setItem("alex-theme",light?"light":"dark")}
+catch(error){console.error(error)}
 $("themeBtn").textContent=light?"الوضع الأسود":"الوضع الأبيض";
 };
 
@@ -948,21 +802,14 @@ if(localStorage.getItem("alex-theme")==="light"){
 document.body.classList.add("light-mode");
 $("themeBtn").textContent="الوضع الأسود";
 }
-}catch(error){
-console.error(error);
-}
-
-/* متابعة جلسة المستخدم */
+}catch(error){console.error(error)}
 
 db.auth.onAuthStateChange((_event,session)=>{
 updateSession(session);
 });
 
 db.auth.getSession().then(({data,error})=>{
-if(error){
-console.error(error);
-return;
-}
+if(error){console.error(error);return}
 updateSession(data.session);
 });
 </script>
